@@ -8,7 +8,7 @@ import {
 
 export interface ChatMessage {
   id: string;
-  roomId: string;
+  roomid: string;
   text: string;
   senderName: string;
   senderId?: string;
@@ -20,7 +20,7 @@ export interface SendMessageRequest {
   text: string;
   senderName: string;
   senderId?: string;
-  roomId?: string;
+  roomid?: string;
   clientId?: string;
 }
 
@@ -38,7 +38,7 @@ export interface MessageListResponse {
 })
 export class SignalRService implements OnDestroy {
   private client: WebPubSubClient | null = null;
-  private currentRoomId = signal<string>('public');
+  private currentroomid = signal<string>('public');
 
   // Reactive state
   readonly connected = signal<boolean>(false);
@@ -53,12 +53,12 @@ export class SignalRService implements OnDestroy {
   /**
    * Connect to the SignalR/Web PubSub service.
    */
-  async connect(roomId: string = 'public', userId?: string): Promise<void> {
+  async connect(roomid: string = 'public', userId?: string): Promise<void> {
     if (this.client) {
       await this.disconnect();
     }
 
-    this.currentRoomId.set(roomId);
+    this.currentroomid.set(roomid);
     this.connectionError.set(null);
 
     try {
@@ -82,7 +82,7 @@ export class SignalRService implements OnDestroy {
         this.connected.set(true);
         this.connectionError.set(null);
         // Join the room group
-        this.client?.joinGroup(roomId);
+        this.client?.joinGroup(roomid);
       });
 
       this.client.on('disconnected', () => {
@@ -138,7 +138,7 @@ export class SignalRService implements OnDestroy {
       text,
       senderName,
       senderId,
-      roomId: this.currentRoomId(),
+      roomid: this.currentroomid(),
       clientId: crypto.randomUUID(),
     };
 
@@ -154,8 +154,8 @@ export class SignalRService implements OnDestroy {
   /**
    * Load message history from the backend.
    */
-  async loadHistory(roomId?: string, limit?: number): Promise<ChatMessage[]> {
-    const room = roomId || this.currentRoomId();
+  async loadHistory(roomid?: string, limit?: number): Promise<ChatMessage[]> {
+    const room = roomid || this.currentroomid();
     const url = limit ? `/api/messages/${room}?limit=${limit}` : `/api/messages/${room}`;
 
     const response = await this.http.get<MessageListResponse>(url).toPromise();

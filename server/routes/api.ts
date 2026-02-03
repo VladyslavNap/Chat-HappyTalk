@@ -37,20 +37,20 @@ export async function registerApiRoutes(
 
   // Get messages for a room
   fastify.get(
-    '/api/messages/:roomId',
+    '/api/messages/:roomid',
     async (
       request: FastifyRequest<{
-        Params: { roomId: string };
+        Params: { roomid: string };
         Querystring: { limit?: string; continuationToken?: string };
       }>,
       reply: FastifyReply
     ) => {
       try {
-        const { roomId } = request.params;
+        const { roomid } = request.params;
         const limit = request.query.limit ? parseInt(request.query.limit, 10) : 50;
         const { continuationToken } = request.query;
 
-        const result = await cosmosService.getMessages(roomId, limit, continuationToken);
+        const result = await cosmosService.getMessages(roomid, limit, continuationToken);
         return reply.send(result);
       } catch (error) {
         fastify.log.error(error, 'Failed to get messages');
@@ -64,7 +64,7 @@ export async function registerApiRoutes(
     '/api/messages',
     async (request: FastifyRequest<{ Body: SendMessageRequest }>, reply: FastifyReply) => {
       try {
-        const { text, senderName, senderId, roomId = 'public', clientId } = request.body;
+        const { text, senderName, senderId, roomid = 'public', clientId } = request.body;
 
         if (!text || !text.trim()) {
           return reply.status(400).send({ error: 'Message text is required' });
@@ -76,7 +76,7 @@ export async function registerApiRoutes(
 
         const message: ChatMessage = {
           id: randomUUID(),
-          roomId,
+          roomid,
           text: text.trim(),
           senderName: senderName.trim(),
           senderId,
@@ -88,7 +88,7 @@ export async function registerApiRoutes(
         const savedMessage = await cosmosService.saveMessage(message);
 
         // Broadcast via SignalR
-        await signalrService.broadcastToRoom(roomId, savedMessage);
+        await signalrService.broadcastToRoom(roomid, savedMessage);
 
         return reply.status(201).send(savedMessage);
       } catch (error) {
@@ -100,24 +100,24 @@ export async function registerApiRoutes(
 
   // Join a room (for SignalR group membership tracking)
   fastify.post(
-    '/api/rooms/:roomId/join',
+    '/api/rooms/:roomid/join',
     async (
       request: FastifyRequest<{
-        Params: { roomId: string };
+        Params: { roomid: string };
         Body: { connectionId: string };
       }>,
       reply: FastifyReply
     ) => {
       try {
-        const { roomId } = request.params;
+        const { roomid } = request.params;
         const { connectionId } = request.body;
 
         if (!connectionId) {
           return reply.status(400).send({ error: 'Connection ID is required' });
         }
 
-        await signalrService.addToGroup(connectionId, roomId);
-        return reply.send({ success: true, roomId });
+        await signalrService.addToGroup(connectionId, roomid);
+        return reply.send({ success: true, roomid });
       } catch (error) {
         fastify.log.error(error, 'Failed to join room');
         return reply.status(500).send({ error: 'Failed to join room' });
@@ -127,24 +127,24 @@ export async function registerApiRoutes(
 
   // Leave a room
   fastify.post(
-    '/api/rooms/:roomId/leave',
+    '/api/rooms/:roomid/leave',
     async (
       request: FastifyRequest<{
-        Params: { roomId: string };
+        Params: { roomid: string };
         Body: { connectionId: string };
       }>,
       reply: FastifyReply
     ) => {
       try {
-        const { roomId } = request.params;
+        const { roomid } = request.params;
         const { connectionId } = request.body;
 
         if (!connectionId) {
           return reply.status(400).send({ error: 'Connection ID is required' });
         }
 
-        await signalrService.removeFromGroup(connectionId, roomId);
-        return reply.send({ success: true, roomId });
+        await signalrService.removeFromGroup(connectionId, roomid);
+        return reply.send({ success: true, roomid });
       } catch (error) {
         fastify.log.error(error, 'Failed to leave room');
         return reply.status(500).send({ error: 'Failed to leave room' });

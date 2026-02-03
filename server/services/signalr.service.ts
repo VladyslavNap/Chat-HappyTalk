@@ -35,8 +35,8 @@ export class SignalRService {
   /**
    * Broadcast a message to all clients in a group (room).
    */
-  async broadcastToRoom(roomId: string, message: ChatMessage): Promise<void> {
-    await this.serviceClient.group(roomId).sendToAll({
+  async broadcastToRoom(roomid: string, message: ChatMessage): Promise<void> {
+    await this.serviceClient.group(roomid).sendToAll({
       type: 'message',
       data: message,
     });
@@ -55,14 +55,14 @@ export class SignalRService {
   /**
    * Add a connection to a group (room).
    */
-  async addToGroup(connectionId: string, roomId: string): Promise<void> {
-    await this.serviceClient.group(roomId).addConnection(connectionId);
+  async addToGroup(connectionId: string, roomid: string): Promise<void> {
+    await this.serviceClient.group(roomid).addConnection(connectionId);
   }
 
   /**
    * Remove a connection from a group (room).
    */
-  async removeFromGroup(connectionId: string, roomId: string): Promise<void> {
-    await this.serviceClient.group(roomId).removeConnection(connectionId);
+  async removeFromGroup(connectionId: string, roomid: string): Promise<void> {
+    await this.serviceClient.group(roomid).removeConnection(connectionId);
   }
 }

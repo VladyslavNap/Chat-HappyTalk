@@ -1,12 +1,12 @@
 /**
  * Message model for chat persistence and SignalR broadcast.
- * Stored in Cosmos DB SQL with roomId as partition key.
+ * Stored in Cosmos DB SQL with roomid as partition key.
  */
 export interface ChatMessage {
   /** Unique message ID (GUID) */
   id: string;
   /** Room/channel identifier - partition key */
-  roomId: string;
+  roomid: string;
   /** Message text content */
   text: string;
   /** Sender display name */
@@ -25,7 +25,7 @@ export interface SendMessageRequest {
   text: string;
   senderName: string;
   senderId?: string;
-  roomId?: string;
+  roomid?: string;
   clientId?: string;
 }
 

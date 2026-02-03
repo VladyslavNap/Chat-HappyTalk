@@ -3,7 +3,7 @@ import { ChatMessage, MessageListResponse } from '../models/message.js';
 
 /**
  * Cosmos DB SQL repository for chat message persistence.
- * Uses roomId as partition key for efficient queries.
+ * Uses roomid as partition key for efficient queries.
  */
 export class CosmosService {
   private client: CosmosClient;
@@ -37,10 +37,10 @@ export class CosmosService {
     });
     this.database = database;
 
-    // Create container with roomId as partition key
+    // Create container with roomid as partition key
     const { container } = await this.database.containers.createIfNotExists({
       id: containerName,
-      partitionKey: { paths: ['/roomId'] },
+      partitionKey: { paths: ['roomid'] },
       defaultTtl: process.env.CHAT_TTL_SECONDS ? parseInt(process.env.CHAT_TTL_SECONDS, 10) : -1,
     });
     this.container = container;
@@ -63,7 +63,7 @@ export class CosmosService {
    * Supports pagination via continuation token.
    */
   async getMessages(
-    roomId: string,
+    roomid: string,
     limit: number = 50,
     continuationToken?: string
   ): Promise<MessageListResponse> {
@@ -71,15 +71,15 @@ export class CosmosService {
 
     const querySpec = {
       query:
-        'SELECT * FROM c WHERE c.roomId = @roomId ORDER BY c.createdAt DESC',
-      parameters: [{ name: '@roomId', value: roomId }],
+        'SELECT * FROM c WHERE c.roomid = @roomid ORDER BY c.createdAt DESC',
+      parameters: [{ name: '@roomid', value: roomid }],
     };
 
     const { resources, continuationToken: nextToken } = await this.container.items
       .query(querySpec, {
         maxItemCount: limit,
         continuationToken,
-        partitionKey: roomId,
+        partitionKey: roomid,
       })
       .fetchNext();
 
@@ -90,12 +90,12 @@ export class CosmosService {
   }
 
   /**
-   * Get a single message by ID and roomId.
+   * Get a single message by ID and roomid.
    */
-  async getMessage(id: string, roomId: string): Promise<ChatMessage | null> {
+  async getMessage(id: string, roomid: string): Promise<ChatMessage | null> {
     await this.initialize();
     try {
-      const { resource } = await this.container.item(id, roomId).read<ChatMessage>();
+      const { resource } = await this.container.item(id, roomid).read<ChatMessage>();
       return resource || null;
     } catch {
       return null;

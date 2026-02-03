@@ -1,0 +1,47 @@
+[
+  {
+    "name": "AZURE_SIGNALR_CONNECTION_STRING",
+    "value": "Endpoint=https://tw-signalr-occupier.service.signalr.net;AccessKey=BJ6AZ9jmjaZ0bWmqfDTcZkLkhi4iyjHCLzjvQ5VVGm47M3rxAzyhJQQJ99BDAC1i4TkXJ3w3AAAAASRSrWaJ;Version=1.0;",
+    "slotSetting": false
+  },
+  {
+    "name": "COSMOS_ENDPOINT",
+    "value": "https://cosmoskhreq3.documents.azure.com:443/",
+    "slotSetting": false
+  },
+  {
+    "name": "COSMOS_KEY",
+    "value": "YOUR_COSMOS_DB_PRIMARY_KEY_HERE",
+    "slotSetting": false
+  },
+  {
+    "name": "COSMOS_DATABASE_NAME",
+    "value": "khRequest",
+    "slotSetting": false
+  },
+  {
+    "name": "COSMOS_CONTAINER_NAME",
+    "value": "chat_messages",
+    "slotSetting": false
+  },
+  {
+    "name": "SIGNALR_HUB_NAME",
+    "value": "chat",
+    "slotSetting": false
+  },
+  {
+    "name": "LOG_LEVEL",
+    "value": "info",
+    "slotSetting": false
+  },
+  {
+    "name": "CORS_ORIGIN",
+    "value": "true",
+    "slotSetting": false
+  },
+  {
+    "name": "NODE_ENV",
+    "value": "production",
+    "slotSetting": false
+  }
+]

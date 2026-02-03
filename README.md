@@ -208,10 +208,10 @@ Chat-HappyTalk/
 |--------|----------|-------------|
 | GET | `/api/health` | Health check |
 | POST | `/api/negotiate` | Get SignalR connection URL |
-| GET | `/api/messages/:roomId` | Get message history |
+| GET | `/api/messages/:roomid` | Get message history |
 | POST | `/api/messages` | Send a new message |
-| POST | `/api/rooms/:roomId/join` | Join a chat room |
-| POST | `/api/rooms/:roomId/leave` | Leave a chat room |
+| POST | `/api/rooms/:roomid/join` | Join a chat room |
+| POST | `/api/rooms/:roomid/leave` | Leave a chat room |
 
 ## ♿ Accessibility Features
 

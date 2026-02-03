@@ -73,7 +73,7 @@
 ---
 
 ## 4) Data Model (Cosmos DB — khRequest)
-- **messages**: partition by `roomId`; schema: `id`, `roomId`, `senderId`, `text`, `ts`, `flags`, `moderation`  
+- **messages**: partition by `roomid`; schema: `id`, `roomid`, `senderId`, `text`, `ts`, `flags`, `moderation`  
 - **rooms**: `id`, `name`, `type(public|private)`, `members[]`, `createdBy`, `ts`  
 - **users**: `id`, `nickname`, `avatar`, `guardianId`, `ageBand`, `settings`  
 - **guardians**: `id`, `email`, `consent`, `linkedUserIds[]`  
