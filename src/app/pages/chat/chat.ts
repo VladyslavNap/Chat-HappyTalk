@@ -35,7 +35,7 @@ export class Chat implements OnInit, OnDestroy {
   // UI state
   newMessage = '';
   isConnecting = signal<boolean>(false);
-  showSidebar = signal<boolean>(true);
+  showSidebar = signal<boolean>(this.getInitialSidebarState());
   private shouldAutoScroll = true;
 
   // Chat view state
@@ -63,6 +63,16 @@ export class Chat implements OnInit, OnDestroy {
         setTimeout(() => this.scrollToBottom(), 100);
       }
     });
+
+    // Handle window resize
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', () => {
+        // Auto-hide sidebar on mobile, auto-show on desktop
+        if (!localStorage.getItem('happytalk_sidebar_visible')) {
+          this.showSidebar.set(window.innerWidth > 768);
+        }
+      });
+    }
   }
 
   async ngOnInit(): Promise<void> {
@@ -197,6 +207,28 @@ export class Chat implements OnInit, OnDestroy {
    */
   toggleSidebar(): void {
     this.showSidebar.set(!this.showSidebar());
+    // Save preference to localStorage
+    localStorage.setItem('happytalk_sidebar_visible', String(this.showSidebar()));
+  }
+
+  /**
+   * Check if device is mobile.
+   */
+  isMobile(): boolean {
+    return window.innerWidth <= 768;
+  }
+
+  /**
+   * Get initial sidebar state based on screen size.
+   */
+  private getInitialSidebarState(): boolean {
+    // Check localStorage first
+    const saved = localStorage.getItem('happytalk_sidebar_visible');
+    if (saved !== null) {
+      return saved === 'true';
+    }
+    // Default: show on desktop, hide on mobile
+    return window.innerWidth > 768;
   }
 
   onKeyPress(event: KeyboardEvent): void {

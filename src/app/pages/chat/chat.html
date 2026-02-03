@@ -1,35 +1,41 @@
 <div class="chat-layout">
-  <!-- Sidebar with room list and user list -->
-  @if (showSidebar()) {
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <h2>HappyTalk</h2>
-      </div>
-
-      <div class="room-list-section">
-        <app-room-list (roomSelected)="onRoomSelected($event)"></app-room-list>
-      </div>
-
-      <div class="user-list-section">
-        <app-user-list (userSelected)="onUserSelected($event)"></app-user-list>
-      </div>
-
-      <div class="sidebar-footer">
-        <div class="current-user-info">
-          <div class="user-avatar-small">
-            {{ (currentUser()?.displayName || currentUser()?.username || 'U').substring(0, 2).toUpperCase() }}
-          </div>
-          <div class="user-details">
-            <div class="user-name-small">{{ currentUser()?.displayName || 'User' }}</div>
-            <div class="user-username-small">@{{ currentUser()?.username || 'unknown' }}</div>
-          </div>
-        </div>
-        <button class="logout-button" (click)="onLogout()" title="Logout">
-          Logout
-        </button>
-      </div>
-    </aside>
+  <!-- Overlay for mobile when sidebar is open -->
+  @if (showSidebar() && isMobile()) {
+    <div class="sidebar-overlay" (click)="toggleSidebar()"></div>
   }
+
+  <!-- Sidebar with room list and user list -->
+  <aside class="sidebar" [class.sidebar-visible]="showSidebar()" [class.sidebar-hidden]="!showSidebar()">
+    <div class="sidebar-header">
+      <h2>HappyTalk</h2>
+      <button class="sidebar-close-btn" (click)="toggleSidebar()" aria-label="Close sidebar">
+        ×
+      </button>
+    </div>
+
+    <div class="room-list-section">
+      <app-room-list (roomSelected)="onRoomSelected($event)"></app-room-list>
+    </div>
+
+    <div class="user-list-section">
+      <app-user-list (userSelected)="onUserSelected($event)"></app-user-list>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="current-user-info">
+        <div class="user-avatar-small">
+          {{ (currentUser()?.displayName || currentUser()?.username || 'U').substring(0, 2).toUpperCase() }}
+        </div>
+        <div class="user-details">
+          <div class="user-name-small">{{ currentUser()?.displayName || 'User' }}</div>
+          <div class="user-username-small">@{{ currentUser()?.username || 'unknown' }}</div>
+        </div>
+      </div>
+      <button class="logout-button" (click)="onLogout()" title="Logout">
+        Logout
+      </button>
+    </div>
+  </aside>
 
   <!-- Main chat area -->
   <div class="chat-container" role="main">
