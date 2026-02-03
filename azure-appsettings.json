@@ -1,7 +1,7 @@
 [
   {
     "name": "AZURE_SIGNALR_CONNECTION_STRING",
-    "value": "Endpoint=https://tw-signalr-occupier.service.signalr.net;AccessKey=BJ6AZ9jmjaZ0bWmqfDTcZkLkhi4iyjHCLzjvQ5VVGm47M3rxAzyhJQQJ99BDAC1i4TkXJ3w3AAAAASRSrWaJ;Version=1.0;",
+    "value": "Endpoint=",
     "slotSetting": false
   },
   {
@@ -31,7 +31,7 @@
   },
   {
     "name": "AZURE_STORAGE_CONNECTION_STRING",
-    "value": "DefaultEndpointsProtocol,
+    "value": "DefaultEndpointsProtocol",,
     "slotSetting": false
   },
   {

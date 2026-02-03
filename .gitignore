@@ -49,3 +49,4 @@ azure-appsettings.local.json
 .env
 .env.local
 .env.production
+azure-appsettings.json
