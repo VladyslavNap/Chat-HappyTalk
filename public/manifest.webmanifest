@@ -1,6 +1,9 @@
 {
-  "name": "happy-talk",
-  "short_name": "happy-talk",
+  "name": "HappyTalk - Chat Application",
+  "short_name": "HappyTalk",
+  "description": "A progressive web chat application for happy conversations",
+  "theme_color": "#2196F3",
+  "background_color": "#ffffff",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
