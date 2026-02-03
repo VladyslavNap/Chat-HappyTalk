@@ -9,38 +9,38 @@
       class="menu-toggle"
       (click)="toggleMenu()"
       [attr.aria-expanded]="menuOpen"
-      aria-label="Toggle navigation menu">
-      <span class="hamburger-line"></span>
-      <span class="hamburger-line"></span>
-      <span class="hamburger-line"></span>
+      [attr.aria-label]="menuOpen ? 'Close navigation menu' : 'Open navigation menu'">
+      <span class="hamburger-line" aria-hidden="true"></span>
+      <span class="hamburger-line" aria-hidden="true"></span>
+      <span class="hamburger-line" aria-hidden="true"></span>
     </button>
 
-    <ul class="nav-menu" [class.open]="menuOpen">
-      <li>
+    <ul class="nav-menu" [class.open]="menuOpen" role="list">
+      <li role="listitem">
         <a 
           routerLink="/" 
           routerLinkActive="active"
           [routerLinkActiveOptions]="{exact: true}"
           (click)="closeMenu()"
-          aria-label="Go to home page">
+          tabindex="0">
           Home
         </a>
       </li>
-      <li>
+      <li role="listitem">
         <a 
           routerLink="/chat" 
           routerLinkActive="active"
           (click)="closeMenu()"
-          aria-label="Go to chat page">
+          tabindex="0">
           Chat
         </a>
       </li>
-      <li>
+      <li role="listitem">
         <a 
           routerLink="/about" 
           routerLinkActive="active"
           (click)="closeMenu()"
-          aria-label="Go to about page">
+          tabindex="0">
           About
         </a>
       </li>
@@ -48,6 +48,6 @@
   </div>
 </nav>
 
-<main class="main-content">
+<main class="main-content" id="main-content">
   <router-outlet></router-outlet>
 </main>

@@ -22,7 +22,8 @@
       "updateMode": "prefetch",
       "resources": {
         "files": [
-          "/**/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)"
+          "/icons/**",
+          "/**/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2|eot)"
         ]
       }
     }
@@ -37,7 +38,8 @@
         "strategy": "freshness",
         "maxSize": 100,
         "maxAge": "1h",
-        "timeout": "10s"
+        "timeout": "10s",
+        "networkTimeoutStrategy": "cache"
       }
     },
     {
@@ -49,7 +51,8 @@
         "strategy": "freshness",
         "maxSize": 1,
         "maxAge": "1m",
-        "timeout": "5s"
+        "timeout": "5s",
+        "networkTimeoutStrategy": "cache"
       }
     }
   ],
@@ -59,5 +62,6 @@
     "!/**/*.*",
     "!/**/*__*",
     "!/**/*__*/**"
-  ]
+  ],
+  "navigationRequestStrategy": "freshness"
 }

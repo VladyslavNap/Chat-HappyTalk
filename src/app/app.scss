@@ -1,43 +1,72 @@
 .main-nav {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, var(--color-primary, #667eea) 0%, var(--color-secondary, #764ba2) 100%);
+  box-shadow: var(--shadow-md, 0 2px 8px rgba(0, 0, 0, 0.1));
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: var(--z-sticky, 1020);
+
+  /* Support for safe area on notched devices */
+  padding-top: max(0px, env(safe-area-inset-top));
 }
 
 .nav-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 1rem 2rem;
+  padding: var(--space-md, 1rem) var(--space-xl, 2rem);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
+
+  @media (max-width: 768px) {
+    padding: var(--space-md, 1rem);
+  }
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-sm, 0.5rem);
   text-decoration: none;
   color: white;
-  font-size: 1.5rem;
+  font-size: var(--font-size-2xl, 1.5rem);
   font-weight: 700;
-  transition: transform 0.3s ease;
+  transition: transform var(--transition-base, 300ms ease);
+  min-height: var(--touch-target-min, 44px);
+  padding: var(--space-xs, 0.25rem);
+  border-radius: var(--radius-sm, 6px);
 
   &:hover {
     transform: scale(1.05);
   }
 
-  &:focus {
+  &:focus-visible {
     outline: 3px solid white;
     outline-offset: 4px;
-    border-radius: 4px;
+  }
+
+  @media (max-width: 768px) {
+    font-size: var(--font-size-xl, 1.25rem);
+  }
+
+  @media (max-width: 375px) {
+    font-size: var(--font-size-lg, 1.125rem);
+    gap: var(--space-xs, 0.25rem);
   }
 }
 
 .logo-emoji {
-  font-size: 2rem;
+  font-size: var(--font-size-3xl, 2rem);
+
+  @media (max-width: 375px) {
+    font-size: var(--font-size-2xl, 1.5rem);
+  }
+}
+
+.logo-text {
+  @media (max-width: 375px) {
+    display: none; /* Hide text on very small screens, keep emoji */
+  }
 }
 
 .menu-toggle {
@@ -45,14 +74,42 @@
   flex-direction: column;
   gap: 4px;
   background: transparent;
-  border: none;
+  border: 2px solid transparent;
   cursor: pointer;
-  padding: 0.5rem;
-  
-  &:focus {
+  padding: var(--space-sm, 0.5rem);
+  min-height: var(--touch-target-min, 44px);
+  min-width: var(--touch-target-min, 44px);
+  justify-content: center;
+  align-items: center;
+  border-radius: var(--radius-sm, 6px);
+  transition: all var(--transition-fast, 150ms ease);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  &:focus-visible {
     outline: 2px solid white;
-    outline-offset: 4px;
-    border-radius: 4px;
+    outline-offset: 2px;
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &[aria-expanded="true"] {
+    .hamburger-line:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+
+    .hamburger-line:nth-child(2) {
+      opacity: 0;
+    }
+
+    .hamburger-line:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
+    }
   }
 }
 
@@ -60,12 +117,13 @@
   width: 25px;
   height: 3px;
   background: white;
-  transition: all 0.3s ease;
+  transition: all var(--transition-base, 300ms ease);
+  border-radius: 2px;
 }
 
 .nav-menu {
   display: flex;
-  gap: 2rem;
+  gap: var(--space-xl, 2rem);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -78,19 +136,27 @@
     color: white;
     text-decoration: none;
     font-weight: 500;
-    font-size: 1.1rem;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    transition: all 0.3s ease;
+    font-size: var(--font-size-lg, 1.1rem);
+    padding: var(--space-sm, 0.5rem) var(--space-md, 1rem);
+    border-radius: var(--radius-sm, 6px);
+    transition: all var(--transition-base, 300ms ease);
     display: block;
+    min-height: var(--touch-target-min, 44px);
+    display: flex;
+    align-items: center;
 
     &:hover {
       background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
     }
 
-    &:focus {
+    &:focus-visible {
       outline: 2px solid white;
       outline-offset: 2px;
+    }
+
+    &:active {
+      transform: translateY(0);
     }
 
     &.active {
@@ -102,6 +168,7 @@
 
 .main-content {
   min-height: calc(100vh - 80px);
+  min-height: calc(100dvh - 80px); /* Use dynamic viewport height */
 }
 
 @media (max-width: 768px) {
@@ -114,33 +181,87 @@
     top: 100%;
     left: 0;
     right: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--color-primary, #667eea) 0%, var(--color-secondary, #764ba2) 100%);
     flex-direction: column;
     gap: 0;
-    padding: 1rem 0;
+    padding: 0;
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease;
+    transition: max-height var(--transition-base, 300ms ease), 
+                box-shadow var(--transition-base, 300ms ease);
+    box-shadow: none;
 
     &.open {
       max-height: 500px;
+      box-shadow: var(--shadow-lg, 0 4px 16px rgba(0, 0, 0, 0.15));
     }
 
     li {
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      opacity: 0;
+      transform: translateX(-20px);
+      animation: none;
 
       &:last-child {
         border-bottom: none;
       }
     }
 
+    &.open li {
+      opacity: 1;
+      transform: translateX(0);
+      animation: slideIn var(--transition-base, 300ms ease) forwards;
+
+      @for $i from 1 through 5 {
+        &:nth-child(#{$i}) {
+          animation-delay: #{$i * 50}ms;
+        }
+      }
+    }
+
     a {
-      padding: 1rem 2rem;
+      padding: var(--space-md, 1rem) var(--space-xl, 2rem);
       border-radius: 0;
+      font-size: var(--font-size-base, 1rem);
+      min-height: 56px; /* Larger touch targets on mobile menu */
 
       &:hover {
         background: rgba(255, 255, 255, 0.15);
+        transform: none;
+      }
+
+      &:active {
+        background: rgba(255, 255, 255, 0.25);
       }
     }
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Very small screens */
+@media (max-width: 375px) {
+  .nav-container {
+    padding: var(--space-sm, 0.5rem) var(--space-md, 1rem);
+  }
+
+  .nav-menu a {
+    padding: var(--space-md, 1rem) var(--space-lg, 1.5rem);
+  }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .nav-menu.open {
+    max-height: 300px; /* Shorter menu in landscape */
   }
 }

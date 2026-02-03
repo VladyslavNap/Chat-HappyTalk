@@ -47,10 +47,12 @@
   </header>
 
   <div 
+    #messagesContainer
     class="messages-container" 
     role="log" 
     aria-live="polite" 
-    aria-label="Chat messages">
+    aria-label="Chat messages"
+    (scroll)="onScroll($event)">
     @if (messages().length === 0 && connected()) {
       <div class="empty-state">
         <span class="emoji" aria-hidden="true">👋</span>

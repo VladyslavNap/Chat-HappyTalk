@@ -4,19 +4,69 @@
   <meta charset="utf-8">
   <title>HappyTalk - Progressive Chat Application</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="HappyTalk - A modern progressive web chat application built with Angular">
-  <meta name="theme-color" content="#2196F3">
+
+  <!-- Enhanced viewport for mobile devices including notched screens -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover, user-scalable=yes">
+
+  <!-- SEO and Description -->
+  <meta name="description" content="HappyTalk - A modern progressive web chat application built with Angular. Chat in real-time with friends and family.">
+  <meta name="keywords" content="chat, messaging, pwa, progressive web app, real-time chat">
+  <meta name="author" content="HappyTalk">
+
+  <!-- Theme colors -->
+  <meta name="theme-color" content="#667eea" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#667eea" media="(prefers-color-scheme: dark)">
+
+  <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="manifest" href="manifest.webmanifest">
-  
-  <!-- Apple Touch Icon -->
-  <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-  
+
+  <!-- Apple Touch Icon and iOS meta tags -->
+  <link rel="apple-touch-icon" href="icons/icon-180x180.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192x192.png">
+
   <!-- iOS specific meta tags -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="HappyTalk">
+
+  <!-- iOS Splash Screens -->
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/iPhone_15_Pro_Max__iPhone_15_Plus__iPhone_14_Pro_Max_portrait.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/iPhone_15_Pro__iPhone_15__iPhone_14_Pro_portrait.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/iPhone_14_Plus__iPhone_13_Pro_Max__iPhone_12_Pro_Max_portrait.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/iPhone_14__iPhone_13_Pro__iPhone_13__iPhone_12_Pro__iPhone_12_portrait.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/iPhone_13_mini__iPhone_12_mini__iPhone_11_Pro__iPhone_XS__iPhone_X_portrait.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/iPhone_11_Pro_Max__iPhone_XS_Max_portrait.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash/iPhone_11__iPhone_XR_portrait.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/iPhone_8_Plus__iPhone_7_Plus__iPhone_6s_Plus__iPhone_6_Plus_portrait.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash/iPhone_8__iPhone_7__iPhone_6s__iPhone_6__4.7__iPhone_SE_portrait.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash/4__iPhone_SE__iPod_touch_5th_generation_and_later_portrait.png">
+
+  <!-- Microsoft Tiles for Windows -->
+  <meta name="msapplication-TileColor" content="#667eea">
+  <meta name="msapplication-TileImage" content="icons/icon-144x144.png">
+  <meta name="msapplication-config" content="browserconfig.xml">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://happytalk.azurewebsites.net/">
+  <meta property="og:title" content="HappyTalk - Progressive Chat Application">
+  <meta property="og:description" content="A modern progressive web chat application built with Angular">
+  <meta property="og:image" content="icons/icon-512x512.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://happytalk.azurewebsites.net/">
+  <meta property="twitter:title" content="HappyTalk - Progressive Chat Application">
+  <meta property="twitter:description" content="A modern progressive web chat application built with Angular">
+  <meta property="twitter:image" content="icons/icon-512x512.png">
+
+  <!-- Performance hints -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to main content</a>
