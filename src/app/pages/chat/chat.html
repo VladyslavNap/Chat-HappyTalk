@@ -1,0 +1,53 @@
+<div class="chat-container" role="main">
+  <header class="chat-header">
+    <h1>
+      <span class="emoji" aria-hidden="true">💬</span>
+      HappyTalk Chat
+    </h1>
+  </header>
+
+  <div 
+    class="messages-container" 
+    role="log" 
+    aria-live="polite" 
+    aria-label="Chat messages">
+    <div 
+      *ngFor="let message of messages; let i = index" 
+      class="message-wrapper"
+      [class.user-message]="message.sender === 'user'"
+      [class.other-message]="message.sender === 'other'">
+      <div class="message">
+        <div class="message-content">
+          {{ message.text }}
+        </div>
+        <div class="message-time">
+          {{ message.timestamp | date: 'short' }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <form class="message-input-container" (ngSubmit)="sendMessage()">
+    <label for="message-input" class="visually-hidden">Type your message</label>
+    <input
+      id="message-input"
+      type="text"
+      [(ngModel)]="newMessage"
+      (keypress)="onKeyPress($event)"
+      placeholder="Type your message..."
+      class="message-input"
+      name="message"
+      autocomplete="off"
+      aria-label="Message input"
+      maxlength="500"
+    />
+    <button 
+      type="submit" 
+      class="send-button"
+      [disabled]="!newMessage.trim()"
+      aria-label="Send message">
+      <span aria-hidden="true">📤</span>
+      Send
+    </button>
+  </form>
+</div>

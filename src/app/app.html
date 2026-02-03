@@ -1,0 +1,53 @@
+<nav class="main-nav" role="navigation" aria-label="Main navigation">
+  <div class="nav-container">
+    <a routerLink="/" class="logo" aria-label="HappyTalk home">
+      <span class="logo-emoji" aria-hidden="true">😊</span>
+      <span class="logo-text">{{ title }}</span>
+    </a>
+
+    <button 
+      class="menu-toggle"
+      (click)="toggleMenu()"
+      [attr.aria-expanded]="menuOpen"
+      aria-label="Toggle navigation menu">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
+
+    <ul class="nav-menu" [class.open]="menuOpen">
+      <li>
+        <a 
+          routerLink="/" 
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{exact: true}"
+          (click)="closeMenu()"
+          aria-label="Go to home page">
+          Home
+        </a>
+      </li>
+      <li>
+        <a 
+          routerLink="/chat" 
+          routerLinkActive="active"
+          (click)="closeMenu()"
+          aria-label="Go to chat page">
+          Chat
+        </a>
+      </li>
+      <li>
+        <a 
+          routerLink="/about" 
+          routerLinkActive="active"
+          (click)="closeMenu()"
+          aria-label="Go to about page">
+          About
+        </a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<main class="main-content">
+  <router-outlet></router-outlet>
+</main>
