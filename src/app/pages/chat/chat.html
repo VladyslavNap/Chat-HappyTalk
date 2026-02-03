@@ -102,7 +102,7 @@
     }
   </div>
 
-  <form class="message-input-container" (ngSubmit)="sendMessage()">
+  <form class="message-input-container" (ngSubmit)="sendMessage()" (submit)="$event.preventDefault(); sendMessage()">
     <label for="message-input" class="visually-hidden">Type your message</label>
     <input
       id="message-input"
@@ -113,15 +113,20 @@
       class="message-input"
       name="message"
       autocomplete="off"
+      autocorrect="off"
+      autocapitalize="sentences"
+      spellcheck="true"
       aria-label="Message input"
       maxlength="500"
       [disabled]="!connected()"
+      enterkeyhint="send"
     />
     <button 
       type="submit" 
       class="send-button"
       [disabled]="!newMessage.trim() || !connected()"
-      aria-label="Send message">
+      aria-label="Send message"
+      (click)="sendMessage()">
       <span aria-hidden="true">📤</span>
       Send
     </button>
