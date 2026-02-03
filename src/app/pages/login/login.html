@@ -1,0 +1,149 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>HappyTalk</h1>
+      <p class="subtitle">{{ isLoginMode() ? 'Welcome back!' : 'Create your account' }}</p>
+    </div>
+
+    <!-- Error message -->
+    @if (errorMessage()) {
+      <div class="error-message">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <!-- Login Form -->
+    @if (isLoginMode()) {
+      <form class="login-form" (ngSubmit)="onLogin()">
+        <div class="form-group">
+          <label for="login-username">Username</label>
+          <input
+            id="login-username"
+            type="text"
+            [(ngModel)]="loginData.username"
+            name="username"
+            placeholder="Enter your username"
+            (keypress)="onKeyPress($event)"
+            [disabled]="isLoading()"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input
+            id="login-password"
+            type="password"
+            [(ngModel)]="loginData.password"
+            name="password"
+            placeholder="Enter your password"
+            (keypress)="onKeyPress($event)"
+            [disabled]="isLoading()"
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="isLoading()"
+        >
+          {{ isLoading() ? 'Logging in...' : 'Login' }}
+        </button>
+      </form>
+    }
+
+    <!-- Registration Form -->
+    @if (!isLoginMode()) {
+      <form class="login-form" (ngSubmit)="onRegister()">
+        <div class="form-group">
+          <label for="reg-username">Username</label>
+          <input
+            id="reg-username"
+            type="text"
+            [(ngModel)]="registerData.username"
+            name="username"
+            placeholder="Choose a username"
+            (keypress)="onKeyPress($event)"
+            [disabled]="isLoading()"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-email">Email</label>
+          <input
+            id="reg-email"
+            type="email"
+            [(ngModel)]="registerData.email"
+            name="email"
+            placeholder="Enter your email"
+            (keypress)="onKeyPress($event)"
+            [disabled]="isLoading()"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-displayname">Display Name</label>
+          <input
+            id="reg-displayname"
+            type="text"
+            [(ngModel)]="registerData.displayName"
+            name="displayName"
+            placeholder="Your name in chat"
+            (keypress)="onKeyPress($event)"
+            [disabled]="isLoading()"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-password">Password</label>
+          <input
+            id="reg-password"
+            type="password"
+            [(ngModel)]="registerData.password"
+            name="password"
+            placeholder="Choose a password (min 6 characters)"
+            (keypress)="onKeyPress($event)"
+            [disabled]="isLoading()"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-confirm-password">Confirm Password</label>
+          <input
+            id="reg-confirm-password"
+            type="password"
+            [(ngModel)]="confirmPassword"
+            name="confirmPassword"
+            placeholder="Confirm your password"
+            (keypress)="onKeyPress($event)"
+            [disabled]="isLoading()"
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="isLoading()"
+        >
+          {{ isLoading() ? 'Creating account...' : 'Create Account' }}
+        </button>
+      </form>
+    }
+
+    <!-- Toggle mode -->
+    <div class="toggle-mode">
+      <p>
+        {{ isLoginMode() ? "Don't have an account?" : 'Already have an account?' }}
+        <button type="button" class="link-button" (click)="toggleMode()">
+          {{ isLoginMode() ? 'Sign up' : 'Login' }}
+        </button>
+      </p>
+    </div>
+  </div>
+</div>

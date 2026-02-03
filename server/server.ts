@@ -8,6 +8,7 @@ import fastifyCors from '@fastify/cors';
 import { join } from 'path';
 import { CosmosService } from './services/cosmos.service.js';
 import { SignalRService } from './services/signalr.service.js';
+import { AuthService } from './services/auth.service.js';
 import { registerApiRoutes } from './routes/api.js';
 
 /**
@@ -38,6 +39,7 @@ async function startServer(): Promise<void> {
   // Initialize services
   const cosmosService = new CosmosService();
   const signalrService = new SignalRService();
+  const authService = new AuthService(cosmosService);
 
   try {
     await cosmosService.initialize();
@@ -50,7 +52,7 @@ async function startServer(): Promise<void> {
   fastify.log.info('SignalR service initialized');
 
   // Register API routes
-  await registerApiRoutes(fastify, cosmosService, signalrService);
+  await registerApiRoutes(fastify, cosmosService, signalrService, authService);
 
   // Serve Angular SPA static files
   // Use process.cwd() to get the project root directory

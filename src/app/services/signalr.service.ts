@@ -129,12 +129,12 @@ export class SignalRService implements OnDestroy {
    * Send a message via the backend API.
    * The backend will persist to Cosmos DB and broadcast via SignalR REST API.
    */
-  async sendMessage(text: string, senderName: string, senderId?: string): Promise<ChatMessage> {
+  async sendMessage(text: string, senderName: string, senderId?: string, roomid?: string): Promise<ChatMessage> {
     const request: SendMessageRequest = {
       text,
       senderName,
       senderId,
-      roomid: this.currentroomid(),
+      roomid: roomid || this.currentroomid(),
       clientId: crypto.randomUUID(),
     };
 
