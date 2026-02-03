@@ -1,3 +1,7 @@
+# NOTE: This configuration is for static-only deployments.
+# For full functionality with SignalR and Cosmos DB, deploy to Azure App Service instead.
+# See README.md for Azure deployment instructions.
+
 [build]
   publish = "dist/happy-talk/browser"
   command = "npm run build"

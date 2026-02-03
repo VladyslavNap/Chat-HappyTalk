@@ -1,25 +1,42 @@
 # Chat-HappyTalk
 
-A modern Progressive Web Application (PWA) for chat built with Angular 21.
+A modern Progressive Web Application (PWA) for real-time chat built with Angular 21 and Fastify, hosted on Azure App Service with Azure SignalR and Cosmos DB.
 
 ## 🚀 Features
 
 - **Progressive Web App (PWA)**: Installable on any device, works offline
-- **Service Worker**: Caches assets and API routes for offline functionality
+- **Real-time Messaging**: Azure SignalR for instant message delivery
+- **Persistent Chat History**: Cosmos DB SQL for message storage
+- **Co-hosted Architecture**: Angular frontend and Fastify backend in single Azure App Service
+- **Service Worker**: Caches assets and optimizes API calls
 - **Responsive Design**: Works seamlessly on desktop, tablet, and mobile
 - **Accessibility First**: WCAG compliant with ARIA labels, keyboard navigation, and semantic HTML
-- **Modern UI**: Clean, gradient-based design with smooth animations
-- **Route Guards**: Protected routes with authentication guards
-- **Three Main Pages**:
-  - Home: Landing page with features overview
-  - Chat: Interactive chat interface with message history
-  - About: Application information and version details
 
 ## 📋 Prerequisites
 
-- Node.js 20.x or higher
+- Node.js 24.x LTS or higher
 - npm 10.x or higher
 - Angular CLI 21.x
+- Azure subscription with:
+  - App Service (HappyTalk)
+  - Azure SignalR Service (tw-signalr-occupier)
+  - Cosmos DB SQL API (cosmoskhreq3, database: khRequest)
+
+## 🔧 Environment Variables
+
+Configure these in Azure App Service Application Settings:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `AZURE_SIGNALR_CONNECTION_STRING` | Azure SignalR connection string | `Endpoint=https://...;AccessKey=...;Version=1.0;` |
+| `COSMOS_ENDPOINT` | Cosmos DB endpoint URL | `https://cosmoskhreq3.documents.azure.com:443/` |
+| `COSMOS_KEY` | Cosmos DB primary key | `xxxxxx==` |
+| `COSMOS_DATABASE_NAME` | Database name | `khRequest` |
+| `COSMOS_CONTAINER_NAME` | Container name (optional) | `chat_messages` |
+| `SIGNALR_HUB_NAME` | SignalR hub name (optional) | `chat` |
+| `PORT` | Server port (optional) | `3000` (default) |
+| `LOG_LEVEL` | Logging level (optional) | `info` |
+| `CHAT_TTL_SECONDS` | Message retention TTL (optional) | `2592000` (30 days) |
 
 ## 🛠️ Installation
 
@@ -36,38 +53,48 @@ npm install
 
 ## 🏃‍♂️ Development
 
-To run the development server:
-
+### Frontend only (Angular dev server):
 ```bash
 npm start
-# or
-ng serve
 ```
+Navigate to `http://localhost:4200/`
 
-Navigate to `http://localhost:4200/`. The application will automatically reload if you change any source files.
+### Full stack (with backend):
+```bash
+# Set environment variables
+export AZURE_SIGNALR_CONNECTION_STRING="..."
+export COSMOS_ENDPOINT="..."
+export COSMOS_KEY="..."
+export COSMOS_DATABASE_NAME="khRequest"
 
-**Note**: Service Worker is disabled in development mode for easier debugging.
+# Build and run
+npm run build:all
+npm run start:server
+```
+Navigate to `http://localhost:3000/`
 
 ## 🏗️ Build
 
-### Production Build
+### Production Build (Frontend + Backend)
 
-Build the project for production with PWA features enabled:
+```bash
+npm run build:all
+```
+
+This builds:
+- Angular app to `dist/happy-talk/browser/`
+- Fastify server to `dist/server/`
+
+### Frontend Only
 
 ```bash
 npm run build
-# or
-ng build --configuration production
 ```
 
-The build artifacts will be stored in the `dist/happy-talk/browser/` directory.
-
-### Development Build
-
-Build without optimizations:
+### Backend Only
 
 ```bash
-ng build --configuration development
+npm run build:server
 ```
 
 ## 🧪 Testing
@@ -76,177 +103,130 @@ Run unit tests:
 
 ```bash
 npm test
-# or
-ng test
 ```
 
-## 📦 PWA Configuration
+## 🚀 Azure App Service Deployment
 
-### Service Worker
+### 1. Configure App Service
 
-The service worker is configured in `ngsw-config.json` and includes:
+- **Runtime**: Node.js 24 LTS
+- **Startup command**: `node dist/server/server.js`
+- **WebSockets**: Enabled
 
-- **Asset Groups**: Caches application shell and assets
-- **Data Groups**: Caches API routes (`/api/**`) with freshness strategy
-- **Install Mode**: Prefetch for app shell, lazy for assets
-- **Cache Strategy**: Freshness with 1-hour max age for API calls
+### 2. Set Application Settings
 
-### Manifest
+Add all environment variables from the table above in Azure Portal → App Service → Configuration → Application settings.
 
-The web app manifest (`public/manifest.webmanifest`) defines:
+### 3. Deploy
 
-- **Name**: HappyTalk - Chat Application
-- **Short Name**: HappyTalk
-- **Theme Color**: #2196F3 (Blue)
-- **Background Color**: #ffffff (White)
-- **Display Mode**: Standalone
-- **Icons**: Multiple sizes from 72x72 to 512x512
+Option A: GitHub Actions (recommended)
+```yaml
+# .github/workflows/azure.yml
+- run: npm ci
+- run: npm run build:all
+- uses: azure/webapps-deploy@v2
+  with:
+    app-name: HappyTalk
+    package: .
+```
 
-## 🚀 Deployment
-
-### Build for Production
-
+Option B: Azure CLI
 ```bash
-npm run build
+npm run build:all
+az webapp deploy --name HappyTalk --src-path . --type zip
 ```
 
-### Deploy to Static Hosting
+Option C: VS Code Azure Extension
+- Install Azure App Service extension
+- Right-click project → Deploy to Web App
 
-The `dist/happy-talk/browser/` directory contains all the files needed for deployment.
+## 📦 Architecture
 
-#### Deploy to Netlify
-
-1. Install Netlify CLI:
-```bash
-npm install -g netlify-cli
 ```
-
-2. Deploy:
-```bash
-cd dist/happy-talk/browser
-netlify deploy --prod
+┌─────────────────────────────────────────────────────────────┐
+│                    Azure App Service                        │
+│                       (HappyTalk)                           │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐    ┌─────────────────────────────────┐ │
+│  │  Fastify Server │    │    Static Files (Angular)       │ │
+│  │  /api/**        │    │    dist/happy-talk/browser      │ │
+│  └────────┬────────┘    └─────────────────────────────────┘ │
+│           │                                                 │
+└───────────┼─────────────────────────────────────────────────┘
+            │
+    ┌───────┴───────┐
+    │               │
+┌───▼───┐     ┌─────▼─────┐
+│ Azure │     │  Cosmos   │
+│SignalR│     │  DB SQL   │
+│Service│     │(khRequest)│
+└───────┘     └───────────┘
 ```
-
-#### Deploy to Vercel
-
-1. Install Vercel CLI:
-```bash
-npm install -g vercel
-```
-
-2. Deploy:
-```bash
-vercel --prod
-```
-
-#### Deploy to Firebase Hosting
-
-1. Install Firebase CLI:
-```bash
-npm install -g firebase-tools
-```
-
-2. Initialize Firebase:
-```bash
-firebase init hosting
-```
-
-3. Configure `firebase.json`:
-```json
-{
-  "hosting": {
-    "public": "dist/happy-talk/browser",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
-  }
-}
-```
-
-4. Deploy:
-```bash
-firebase deploy
-```
-
-#### Deploy to GitHub Pages
-
-1. Build with base href:
-```bash
-ng build --base-href=/Chat-HappyTalk/
-```
-
-2. Install angular-cli-ghpages:
-```bash
-npm install -g angular-cli-ghpages
-```
-
-3. Deploy:
-```bash
-npx angular-cli-ghpages --dir=dist/happy-talk/browser
-```
-
-### Testing Production Build Locally
-
-Use a simple HTTP server to test the production build:
-
-```bash
-npx http-server dist/happy-talk/browser -p 8080 -c-1
-```
-
-Navigate to `http://localhost:8080/`
 
 ## 🎨 Project Structure
 
 ```
 Chat-HappyTalk/
-├── src/
+├── src/                          # Angular frontend
 │   ├── app/
-│   │   ├── guards/
-│   │   │   └── auth-guard.ts          # Route guard
-│   │   ├── pages/
-│   │   │   ├── home/                  # Home page component
-│   │   │   ├── chat/                  # Chat page component
-│   │   │   └── about/                 # About page component
-│   │   ├── app.config.ts              # App configuration
-│   │   ├── app.routes.ts              # Route definitions
-│   │   ├── app.ts                     # Root component
-│   │   ├── app.html                   # Root template
-│   │   └── app.scss                   # Root styles
-│   ├── index.html                     # Main HTML file
-│   ├── main.ts                        # Application entry point
-│   └── styles.scss                    # Global styles
-├── public/
-│   ├── icons/                         # PWA icons
-│   ├── manifest.webmanifest           # PWA manifest
-│   └── favicon.ico                    # Favicon
-├── ngsw-config.json                   # Service worker config
-├── angular.json                       # Angular CLI config
-├── package.json                       # Dependencies
-└── tsconfig.json                      # TypeScript config
+│   │   ├── guards/               # Route guards
+│   │   ├── pages/                # Page components
+│   │   │   ├── home/
+│   │   │   ├── chat/             # Real-time chat UI
+│   │   │   └── about/
+│   │   ├── services/
+│   │   │   └── signalr.service.ts  # SignalR client
+│   │   ├── app.config.ts
+│   │   ├── app.routes.ts
+│   │   └── app.ts
+│   ├── environments/             # Environment configs
+│   ├── index.html
+│   ├── main.ts
+│   └── styles.scss
+├── server/                       # Fastify backend
+│   ├── models/
+│   │   └── message.ts            # Message schema
+│   ├── routes/
+│   │   └── api.ts                # API endpoints
+│   ├── services/
+│   │   ├── cosmos.service.ts     # Cosmos DB client
+│   │   └── signalr.service.ts    # SignalR service
+│   ├── server.ts                 # Entry point
+│   └── tsconfig.json
+├── public/                       # Static assets
+│   ├── icons/
+│   └── manifest.webmanifest
+├── ngsw-config.json              # Service worker config
+├── angular.json                  # Angular CLI config
+├── package.json
+└── tsconfig.json
 ```
+
+## 🔌 API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/health` | Health check |
+| POST | `/api/negotiate` | Get SignalR connection URL |
+| GET | `/api/messages/:roomId` | Get message history |
+| POST | `/api/messages` | Send a new message |
+| POST | `/api/rooms/:roomId/join` | Join a chat room |
+| POST | `/api/rooms/:roomId/leave` | Leave a chat room |
 
 ## ♿ Accessibility Features
 
-- **ARIA Labels**: All interactive elements have proper ARIA labels
-- **Keyboard Navigation**: Full keyboard support with visible focus indicators
-- **Semantic HTML**: Proper use of HTML5 semantic elements
-- **Screen Reader Support**: Compatible with major screen readers
-- **Skip Links**: Skip to main content link for keyboard users
-- **Color Contrast**: WCAG AA compliant color contrast ratios
+- ARIA labels on all interactive elements
+- Full keyboard navigation support
+- Semantic HTML5 elements
+- Screen reader compatible
+- WCAG AA color contrast
 
-## 🔒 Security
+## 🔒 Security Notes
 
-- **Content Security Policy**: Configure CSP headers in your hosting
-- **HTTPS**: Always use HTTPS in production for service workers
-- **Route Guards**: Protected routes with authentication guards
+- Store all secrets in Azure App Service Application Settings
+- Never commit connection strings or keys to source control
+- Enable HTTPS only in production
+- Configure CORS appropriately for your domain
 
 ## 📱 PWA Installation
 
@@ -268,29 +248,6 @@ Users can install the app:
 
 This project is open source and available under the MIT License.
 
-## 👨‍💻 Development Commands
-
-| Command | Description |
-|---------|-------------|
-| `npm start` | Start development server |
-| `npm run build` | Build for production |
-| `npm test` | Run unit tests |
-| `ng generate component <name>` | Generate a new component |
-| `ng generate service <name>` | Generate a new service |
-| `ng generate guard <name>` | Generate a new guard |
-
-## 🌐 Browser Support
-
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-- Mobile browsers (iOS Safari, Chrome Android)
-
-## 📞 Support
-
-For issues and questions, please open an issue in the GitHub repository.
-
 ---
 
-Built with ❤️ using Angular 21
+Built with ❤️ using Angular 21, Fastify, Azure SignalR, and Cosmos DB

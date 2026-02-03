@@ -29,15 +29,40 @@
   ],
   "dataGroups": [
     {
-      "name": "api",
+      "name": "api-messages",
       "urls": [
-        "/api/**"
+        "/api/messages/**"
       ],
       "cacheConfig": {
         "strategy": "freshness",
         "maxSize": 100,
         "maxAge": "1h",
         "timeout": "10s"
+      }
+    },
+    {
+      "name": "api-realtime",
+      "urls": [
+        "/api/negotiate",
+        "/api/rooms/**"
+      ],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 0,
+        "maxAge": "0u",
+        "timeout": "0u"
+      }
+    },
+    {
+      "name": "api-health",
+      "urls": [
+        "/api/health"
+      ],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 1,
+        "maxAge": "1m",
+        "timeout": "5s"
       }
     }
   ]

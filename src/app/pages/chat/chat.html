@@ -1,9 +1,49 @@
 <div class="chat-container" role="main">
+  <!-- Name prompt overlay -->
+  @if (showNamePrompt()) {
+    <div class="name-prompt-overlay" role="dialog" aria-labelledby="name-prompt-title">
+      <div class="name-prompt-dialog">
+        <h2 id="name-prompt-title">Welcome to HappyTalk! 👋</h2>
+        <p>Please enter your display name to join the chat:</p>
+        <input
+          type="text"
+          [(ngModel)]="tempUserName"
+          (keypress)="onNameKeyPress($event)"
+          placeholder="Your name..."
+          class="name-input"
+          maxlength="50"
+          autofocus
+        />
+        <button
+          (click)="setUserName()"
+          [disabled]="!tempUserName.trim()"
+          class="name-submit-button">
+          Join Chat
+        </button>
+      </div>
+    </div>
+  }
+
   <header class="chat-header">
     <h1>
       <span class="emoji" aria-hidden="true">💬</span>
       HappyTalk Chat
     </h1>
+    <div class="connection-status" [class.connected]="connected()" [class.error]="connectionError()">
+      @if (isConnecting()) {
+        <span class="status-indicator connecting"></span>
+        Connecting...
+      } @else if (connected()) {
+        <span class="status-indicator online"></span>
+        Connected as {{ userName() }}
+      } @else if (connectionError()) {
+        <span class="status-indicator offline"></span>
+        {{ connectionError() }}
+      } @else {
+        <span class="status-indicator offline"></span>
+        Disconnected
+      }
+    </div>
   </header>
 
   <div 
@@ -11,20 +51,30 @@
     role="log" 
     aria-live="polite" 
     aria-label="Chat messages">
-    <div 
-      *ngFor="let message of messages; let i = index" 
-      class="message-wrapper"
-      [class.user-message]="message.sender === 'user'"
-      [class.other-message]="message.sender === 'other'">
-      <div class="message">
-        <div class="message-content">
-          {{ message.text }}
-        </div>
-        <div class="message-time">
-          {{ message.timestamp | date: 'short' }}
+    @if (messages().length === 0 && connected()) {
+      <div class="empty-state">
+        <span class="emoji" aria-hidden="true">👋</span>
+        <p>No messages yet. Be the first to say hello!</p>
+      </div>
+    }
+    @for (message of messages(); track $index) {
+      <div 
+        class="message-wrapper"
+        [class.user-message]="message.sender === 'user'"
+        [class.other-message]="message.sender === 'other'">
+        <div class="message">
+          @if (message.senderName) {
+            <div class="message-sender">{{ message.senderName }}</div>
+          }
+          <div class="message-content">
+            {{ message.text }}
+          </div>
+          <div class="message-time">
+            {{ message.timestamp | date: 'short' }}
+          </div>
         </div>
       </div>
-    </div>
+    }
   </div>
 
   <form class="message-input-container" (ngSubmit)="sendMessage()">
@@ -40,11 +90,12 @@
       autocomplete="off"
       aria-label="Message input"
       maxlength="500"
+      [disabled]="!connected()"
     />
     <button 
       type="submit" 
       class="send-button"
-      [disabled]="!newMessage.trim()"
+      [disabled]="!newMessage.trim() || !connected()"
       aria-label="Send message">
       <span aria-hidden="true">📤</span>
       Send

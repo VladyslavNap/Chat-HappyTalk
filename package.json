@@ -1,12 +1,19 @@
 {
   "name": "happy-talk",
   "version": "0.0.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "start:server": "node dist/server/server.js",
     "build": "ng build",
+    "build:server": "tsc -p server/tsconfig.json",
+    "build:all": "npm run build && npm run build:server",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "dev:server": "npm run build:server && npm run start:server"
   },
   "prettier": {
     "printWidth": 100,
@@ -30,6 +37,12 @@
     "@angular/platform-browser": "^21.1.0",
     "@angular/router": "^21.1.0",
     "@angular/service-worker": "^21.1.0",
+    "@azure/cosmos": "^4.2.0",
+    "@azure/web-pubsub": "^1.1.3",
+    "@azure/web-pubsub-client": "^1.0.1",
+    "@fastify/cors": "^10.0.2",
+    "@fastify/static": "^8.0.4",
+    "fastify": "^5.2.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -37,6 +50,7 @@
     "@angular/build": "^21.1.2",
     "@angular/cli": "^21.1.2",
     "@angular/compiler-cli": "^21.1.0",
+    "@types/node": "^22.13.1",
     "jsdom": "^27.1.0",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"

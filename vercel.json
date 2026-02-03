@@ -1,4 +1,6 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "_comment": "NOTE: This config is for static-only deployments. For full functionality with SignalR and Cosmos DB, deploy to Azure App Service instead. See README.md.",
   "buildCommand": "npm run build",
   "outputDirectory": "dist/happy-talk/browser",
   "rewrites": [

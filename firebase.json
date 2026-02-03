@@ -1,4 +1,5 @@
 {
+  "_comment": "NOTE: This config is for static-only deployments. For full functionality with SignalR and Cosmos DB, deploy to Azure App Service instead. See README.md.",
   "hosting": {
     "public": "dist/happy-talk/browser",
     "ignore": [
