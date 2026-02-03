@@ -4,6 +4,7 @@
  */
 export const environment = {
   production: false,
+  apiUrl: '',  // Empty for same-origin, set for external API
   apiBaseUrl: '',  // Empty for same-origin, set for external API
   signalrHubName: 'chat',
   defaultroomid: 'public',

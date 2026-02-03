@@ -1,0 +1,134 @@
+<div class="room-list-container">
+  <div class="room-list-header">
+    <h3>Rooms</h3>
+    <button class="create-room-btn" (click)="openCreateDialog()" title="Create Room">
+      +
+    </button>
+  </div>
+
+  @if (isLoading() && rooms().length === 0) {
+    <div class="loading-state">
+      <p>Loading rooms...</p>
+    </div>
+  }
+
+  <div class="room-list">
+    @for (room of rooms(); track room.id) {
+      <div class="room-item" (click)="selectRoom(room)">
+        <div class="room-icon">
+          @if (room.id === 'public') {
+            🌍
+          } @else {
+            #
+          }
+        </div>
+        <div class="room-info">
+          <div class="room-name">{{ room.name }}</div>
+          @if (room.description) {
+            <div class="room-description">{{ room.description }}</div>
+          }
+        </div>
+        @if (canManageRoom(room)) {
+          <div class="room-actions" (click)="$event.stopPropagation()">
+            <button class="action-btn" (click)="openRenameDialog(room)" title="Rename room">
+              ✏️
+            </button>
+            <button class="action-btn delete-btn" (click)="deleteRoom(room)" title="Delete room">
+              🗑️
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Create Room Dialog -->
+  @if (showCreateDialog()) {
+    <div class="dialog-overlay" (click)="closeCreateDialog()">
+      <div class="dialog" (click)="$event.stopPropagation()">
+        <div class="dialog-header">
+          <h3>Create New Room</h3>
+          <button class="close-btn" (click)="closeCreateDialog()">×</button>
+        </div>
+        <div class="dialog-content">
+          <div class="form-group">
+            <label for="room-name">Room Name</label>
+            <input
+              id="room-name"
+              type="text"
+              [(ngModel)]="newRoomName"
+              placeholder="Enter room name"
+              maxlength="50"
+              autofocus
+            />
+          </div>
+          <div class="form-group">
+            <label for="room-description">Description (optional)</label>
+            <textarea
+              id="room-description"
+              [(ngModel)]="newRoomDescription"
+              placeholder="Enter room description"
+              maxlength="200"
+              rows="3"
+            ></textarea>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn-secondary" (click)="closeCreateDialog()">Cancel</button>
+          <button
+            class="btn-primary"
+            (click)="createRoom()"
+            [disabled]="!newRoomName.trim()"
+          >
+            Create Room
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Rename Room Dialog -->
+  @if (showRenameDialog() && selectedRoom()) {
+    <div class="dialog-overlay" (click)="closeRenameDialog()">
+      <div class="dialog" (click)="$event.stopPropagation()">
+        <div class="dialog-header">
+          <h3>Edit Room</h3>
+          <button class="close-btn" (click)="closeRenameDialog()">×</button>
+        </div>
+        <div class="dialog-content">
+          <div class="form-group">
+            <label for="rename-room-name">Room Name</label>
+            <input
+              id="rename-room-name"
+              type="text"
+              [(ngModel)]="renameRoomName"
+              placeholder="Enter room name"
+              maxlength="50"
+              autofocus
+            />
+          </div>
+          <div class="form-group">
+            <label for="rename-room-description">Description (optional)</label>
+            <textarea
+              id="rename-room-description"
+              [(ngModel)]="renameRoomDescription"
+              placeholder="Enter room description"
+              maxlength="200"
+              rows="3"
+            ></textarea>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn-secondary" (click)="closeRenameDialog()">Cancel</button>
+          <button
+            class="btn-primary"
+            (click)="renameRoom()"
+            [disabled]="!renameRoomName.trim()"
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

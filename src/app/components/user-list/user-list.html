@@ -1,0 +1,46 @@
+<div class="user-list-container">
+  <div class="user-list-header">
+    <h3>Online Users</h3>
+    <button 
+      class="refresh-btn" 
+      (click)="loadOnlineUsers()" 
+      [disabled]="isLoading()"
+      title="Refresh users"
+    >
+      <span [class.spinning]="isLoading()">↻</span>
+    </button>
+  </div>
+
+  @if (isLoading() && onlineUsers().length === 0) {
+    <div class="loading-state">
+      <p>Loading users...</p>
+    </div>
+  }
+
+  @if (!isLoading() && onlineUsers().length === 0) {
+    <div class="empty-state">
+      <p>No other users online</p>
+    </div>
+  }
+
+  <div class="user-list">
+    @for (user of onlineUsers(); track user.id) {
+      <div class="user-item" (click)="selectUser(user)">
+        <div class="user-avatar">
+          @if (user.avatarUrl) {
+            <img [src]="user.avatarUrl" [alt]="user.displayName" />
+          } @else {
+            <div class="avatar-initials">
+              {{ getUserInitials(user) }}
+            </div>
+          }
+          <span class="status-indicator"></span>
+        </div>
+        <div class="user-info">
+          <div class="user-name">{{ user.displayName }}</div>
+          <div class="user-username">@{{ user.username }}</div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

@@ -2,6 +2,12 @@ import { Component, OnInit, OnDestroy, signal, computed, inject, effect, Element
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SignalRService, ChatMessage } from '../../services/signalr.service';
+import { AuthService } from '../../services/auth.service';
+import { UserList } from '../../components/user-list/user-list';
+import { RoomList } from '../../components/room-list/room-list';
+import { UserProfile } from '../../models/auth.model';
+import { createDMRoomId } from '../../models/dm.model';
+import { Room } from '../../models/room.model';
 
 interface DisplayMessage {
   text: string;
@@ -10,26 +16,33 @@ interface DisplayMessage {
   senderName?: string;
 }
 
+type ChatView = 'room' | 'dm';
+
 @Component({
   selector: 'app-chat',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, UserList, RoomList],
   templateUrl: './chat.html',
   styleUrl: './chat.scss',
 })
 export class Chat implements OnInit, OnDestroy {
   private signalrService = inject(SignalRService);
+  private authService = inject(AuthService);
   private messagesContainer = viewChild<ElementRef<HTMLDivElement>>('messagesContainer');
 
-  // User identity (generated or from storage)
-  private userId = signal<string>(this.getOrCreateUserId());
-  userName = signal<string>(this.getOrCreateUserName());
+  // User identity from auth service
+  currentUser = this.authService.currentUser;
 
   // UI state
   newMessage = '';
   isConnecting = signal<boolean>(false);
-  showNamePrompt = signal<boolean>(false);
-  tempUserName = '';
+  showSidebar = signal<boolean>(true);
   private shouldAutoScroll = true;
+
+  // Chat view state
+  currentView = signal<ChatView>('room');
+  currentDMUser = signal<UserProfile | null>(null);
+  currentRoom = signal<Room | null>(null);
+  currentRoomId = signal<string>('public');
 
   // Computed messages for display
   messages = computed<DisplayMessage[]>(() => {
@@ -53,12 +66,17 @@ export class Chat implements OnInit, OnDestroy {
   }
 
   async ngOnInit(): Promise<void> {
-    // Check if user has a name set
-    if (!localStorage.getItem('happytalk_username')) {
-      this.showNamePrompt.set(true);
-    } else {
-      await this.connectToChat();
-    }
+    // Set initial room to public
+    this.currentRoom.set({
+      id: 'public',
+      name: 'Public',
+      description: 'Main public chat room',
+      createdBy: 'system',
+      createdAt: new Date().toISOString(),
+      type: 'public',
+      isActive: true,
+    });
+    await this.connectToChat();
   }
 
   ngOnDestroy(): void {
@@ -68,12 +86,15 @@ export class Chat implements OnInit, OnDestroy {
   async connectToChat(): Promise<void> {
     this.isConnecting.set(true);
     try {
-      await this.signalrService.connect('public', this.userId());
-      await this.signalrService.loadHistory('public', 50);
-      // Scroll to bottom after loading history - use multiple attempts to ensure it works
-      this.scrollToBottom(false);
-      setTimeout(() => this.scrollToBottom(false), 100);
-      setTimeout(() => this.scrollToBottom(false), 300);
+      const user = this.currentUser();
+      if (user) {
+        await this.signalrService.connect('public', user.id);
+        await this.signalrService.loadHistory('public', 50);
+        // Scroll to bottom after loading history
+        this.scrollToBottom(false);
+        setTimeout(() => this.scrollToBottom(false), 100);
+        setTimeout(() => this.scrollToBottom(false), 300);
+      }
     } catch (error) {
       console.error('Failed to connect to chat:', error);
     } finally {
@@ -81,13 +102,60 @@ export class Chat implements OnInit, OnDestroy {
     }
   }
 
-  async setUserName(): Promise<void> {
-    if (this.tempUserName.trim()) {
-      const trimmedName = this.tempUserName.trim();
-      localStorage.setItem('happytalk_username', trimmedName);
-      this.userName.set(trimmedName);
-      this.showNamePrompt.set(false);
-      await this.connectToChat();
+  /**
+   * Handle room selection from room list.
+   */
+  async onRoomSelected(room: Room): Promise<void> {
+    const currentUser = this.currentUser();
+    if (!currentUser) return;
+
+    this.currentView.set('room');
+    this.currentRoom.set(room);
+    this.currentDMUser.set(null);
+    this.currentRoomId.set(room.id);
+
+    // Disconnect and reconnect to selected room
+    await this.signalrService.disconnect();
+    this.isConnecting.set(true);
+    try {
+      await this.signalrService.connect(room.id, currentUser.id);
+      await this.signalrService.loadHistory(room.id, 50);
+      this.scrollToBottom(false);
+      setTimeout(() => this.scrollToBottom(false), 100);
+    } catch (error) {
+      console.error('Failed to connect to room:', error);
+    } finally {
+      this.isConnecting.set(false);
+    }
+  }
+
+  /**
+   * Handle user selection from user list (start DM).
+   */
+  async onUserSelected(user: UserProfile): Promise<void> {
+    const currentUser = this.currentUser();
+    if (!currentUser) return;
+
+    this.currentView.set('dm');
+    this.currentDMUser.set(user);
+    this.currentRoom.set(null);
+
+    // Create DM room ID
+    const roomId = createDMRoomId(currentUser.id, user.id);
+    this.currentRoomId.set(roomId);
+
+    // Disconnect and reconnect to DM room
+    await this.signalrService.disconnect();
+    this.isConnecting.set(true);
+    try {
+      await this.signalrService.connect(roomId, currentUser.id);
+      await this.signalrService.loadHistory(roomId, 50);
+      this.scrollToBottom(false);
+      setTimeout(() => this.scrollToBottom(false), 100);
+    } catch (error) {
+      console.error('Failed to connect to DM room:', error);
+    } finally {
+      this.isConnecting.set(false);
     }
   }
 
@@ -99,11 +167,15 @@ export class Chat implements OnInit, OnDestroy {
       // Ensure auto-scroll for sent messages
       this.shouldAutoScroll = true;
 
+      const user = this.currentUser();
+      if (!user) return;
+
       try {
         await this.signalrService.sendMessage(
           messageText,
-          this.userName(),
-          this.userId()
+          user.displayName,
+          user.id,
+          this.currentRoomId()
         );
       } catch (error) {
         console.error('Failed to send message:', error);
@@ -113,17 +185,24 @@ export class Chat implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Handle logout.
+   */
+  onLogout(): void {
+    this.authService.logout().subscribe();
+  }
+
+  /**
+   * Toggle sidebar visibility.
+   */
+  toggleSidebar(): void {
+    this.showSidebar.set(!this.showSidebar());
+  }
+
   onKeyPress(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       this.sendMessage();
-    }
-  }
-
-  onNameKeyPress(event: KeyboardEvent): void {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      this.setUserName();
     }
   }
 
@@ -147,25 +226,13 @@ export class Chat implements OnInit, OnDestroy {
   }
 
   private toDisplayMessage(msg: ChatMessage): DisplayMessage {
-    const isCurrentUser = msg.senderId === this.userId();
+    const user = this.currentUser();
+    const isCurrentUser = msg.senderId === user?.id;
     return {
       text: msg.text,
       sender: isCurrentUser ? 'user' : 'other',
       timestamp: new Date(msg.createdAt),
       senderName: isCurrentUser ? undefined : msg.senderName,
     };
-  }
-
-  private getOrCreateUserId(): string {
-    let id = localStorage.getItem('happytalk_userid');
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem('happytalk_userid', id);
-    }
-    return id;
-  }
-
-  private getOrCreateUserName(): string {
-    return localStorage.getItem('happytalk_username') || '';
   }
 }
