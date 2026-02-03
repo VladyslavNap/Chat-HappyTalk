@@ -52,3 +52,4 @@ azure-appsettings.local.json
 azure-appsettings.json
 .env.example
 /.vs
+/.playwright-mcp
