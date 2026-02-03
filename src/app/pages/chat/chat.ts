@@ -70,8 +70,10 @@ export class Chat implements OnInit, OnDestroy {
     try {
       await this.signalrService.connect('public', this.userId());
       await this.signalrService.loadHistory('public', 50);
-      // Scroll to bottom after loading history
-      setTimeout(() => this.scrollToBottom(), 200);
+      // Scroll to bottom after loading history - use multiple attempts to ensure it works
+      this.scrollToBottom(false);
+      setTimeout(() => this.scrollToBottom(false), 100);
+      setTimeout(() => this.scrollToBottom(false), 300);
     } catch (error) {
       console.error('Failed to connect to chat:', error);
     } finally {
