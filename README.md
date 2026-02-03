@@ -6,9 +6,11 @@ A modern Progressive Web Application (PWA) for real-time chat built with Angular
 
 - **Progressive Web App (PWA)**: Installable on any device, works offline
 - **Real-time Messaging**: Azure SignalR for instant message delivery
-- **Authentication**: Email/password registration + Google OAuth 2.0 sign-in
-- **Admin Approval System**: Access requests reviewed by administrators
-- **Persistent Chat History**: Cosmos DB SQL for message storage
+- **Authentication**: JWT-based email/password authentication with secure token management
+- **Direct Messages (DMs)**: Private one-on-one conversations between users
+- **Multi-Room Chat**: Create and manage public/private chat rooms
+- **Online User Presence**: Real-time tracking of online users
+- **Persistent Chat History**: Cosmos DB SQL for message storage with TTL support
 - **File Storage**: Azure Blob Storage for avatars and file uploads
 - **Co-hosted Architecture**: Angular frontend and Fastify backend in single Azure App Service
 - **Service Worker**: Caches assets and optimizes API calls
