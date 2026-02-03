@@ -143,6 +143,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    min-height: 0;
     border-bottom: 1px solid #e0e0e0;
   }
 
@@ -151,6 +152,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    min-height: 0;
   }
 
   .sidebar-footer {
@@ -565,7 +567,7 @@
   display: flex;
   gap: var(--space-sm);
   padding: var(--space-md);
-  padding-bottom: max(var(--space-md), env(safe-area-inset-bottom));
+  padding-bottom: max(var(--space-md), calc(env(safe-area-inset-bottom) + 8px));
   background: var(--color-surface);
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
@@ -627,12 +629,12 @@
 
   .messages-container {
     padding: var(--space-sm);
-    padding-bottom: calc(var(--space-sm) + 80px); // Extra space for input
+    padding-bottom: calc(var(--space-sm) + 96px + env(safe-area-inset-bottom)); // Extra space for input
   }
 
   .message-input-container {
     padding: var(--space-sm) var(--space-md);
-    padding-bottom: max(var(--space-sm), calc(env(safe-area-inset-bottom) + 8px));
+    padding-bottom: max(12px, calc(env(safe-area-inset-bottom) + 12px));
     gap: var(--space-xs);
     position: fixed;
     bottom: 0;
@@ -685,7 +687,7 @@
   // Ensure chat container doesn't overlap with fixed input
   .chat-layout {
     .chat-container {
-      padding-bottom: 80px; // Space for fixed input bar
+      padding-bottom: calc(96px + env(safe-area-inset-bottom)); // Space for fixed input bar
     }
   }
 }
@@ -735,7 +737,7 @@
 
   .message-input-container {
     padding: 8px 12px;
-    padding-bottom: max(8px, calc(env(safe-area-inset-bottom) + 8px));
+    padding-bottom: max(10px, calc(env(safe-area-inset-bottom) + 10px));
   }
 
   .message-input {
