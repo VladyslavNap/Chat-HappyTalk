@@ -1,12 +1,13 @@
-import { WebPubSubServiceClient } from '@azure/web-pubsub';
 import { ChatMessage } from '../models/message.js';
+import { createHmac } from 'crypto';
 
 /**
- * Azure SignalR/Web PubSub service for real-time chat.
- * Handles negotiate tokens and message broadcast.
+ * Azure SignalR Service for real-time chat (Default mode).
+ * Handles negotiate tokens and message broadcast via REST API.
  */
 export class SignalRService {
-  private serviceClient: WebPubSubServiceClient;
+  private endpoint: string;
+  private accessKey: string;
   private hubName: string;
 
   constructor() {
@@ -15,54 +16,223 @@ export class SignalRService {
       throw new Error('AZURE_SIGNALR_CONNECTION_STRING environment variable is required');
     }
 
+    // Parse connection string
+    const parsed = this.parseConnectionString(connectionString);
+    this.endpoint = parsed.endpoint;
+    this.accessKey = parsed.accessKey;
     this.hubName = process.env.SIGNALR_HUB_NAME || 'chat';
-    this.serviceClient = new WebPubSubServiceClient(connectionString, this.hubName);
+
+    console.log(`SignalR Service initialized: ${this.endpoint}, hub: ${this.hubName}`);
   }
 
   /**
-   * Generate a client access token for WebSocket connection.
-   * For public chat, no user ID is required.
+   * Parse Azure SignalR connection string.
    */
-  async negotiate(userId?: string): Promise<{ url: string }> {
-    const options = userId
-      ? { userId, roles: ['webpubsub.joinLeaveGroup', 'webpubsub.sendToGroup'] }
-      : { roles: ['webpubsub.joinLeaveGroup', 'webpubsub.sendToGroup'] };
+  private parseConnectionString(connectionString: string): { endpoint: string; accessKey: string } {
+    // Remove any whitespace/newlines that might have gotten into the connection string
+    const cleanedConnectionString = connectionString.replace(/\s+/g, '');
+    const parts = cleanedConnectionString.split(';');
+    let endpoint = '';
+    let accessKey = '';
 
-    const token = await this.serviceClient.getClientAccessToken(options);
-    return { url: token.url };
+    for (const part of parts) {
+      if (!part) continue;
+      const [key, ...valueParts] = part.split('=');
+      const value = valueParts.join('=');
+
+      if (key.toLowerCase() === 'endpoint') {
+        endpoint = value;
+      } else if (key.toLowerCase() === 'accesskey') {
+        accessKey = value;
+      }
+    }
+
+    if (!endpoint || !accessKey) {
+      throw new Error('Invalid connection string: missing Endpoint or AccessKey');
+    }
+
+    return { endpoint, accessKey };
   }
 
   /**
-   * Broadcast a message to all clients in a group (room).
+   * Generate a JWT token for SignalR client access.
+   */
+  private generateToken(userId: string, expiresInMinutes: number = 60): string {
+    const audience = `${this.endpoint}/client/?hub=${this.hubName}`;
+    const now = Math.floor(Date.now() / 1000);
+    const exp = now + (expiresInMinutes * 60);
+
+    const header = {
+      alg: 'HS256',
+      typ: 'JWT'
+    };
+
+    const payload = {
+      aud: audience,
+      iat: now,
+      exp: exp,
+      sub: userId,
+      'nameid': userId
+    };
+
+    const base64Header = Buffer.from(JSON.stringify(header)).toString('base64url');
+    const base64Payload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+
+    const signature = createHmac('sha256', this.accessKey)
+      .update(`${base64Header}.${base64Payload}`)
+      .digest('base64url');
+
+    return `${base64Header}.${base64Payload}.${signature}`;
+  }
+
+  /**
+   * Generate a JWT token for server REST API access.
+   */
+  private generateServerToken(expiresInMinutes: number = 60): string {
+    const audience = `${this.endpoint}/api/v1/hubs/${this.hubName}`;
+    const now = Math.floor(Date.now() / 1000);
+    const exp = now + (expiresInMinutes * 60);
+
+    const header = {
+      alg: 'HS256',
+      typ: 'JWT'
+    };
+
+    const payload = {
+      aud: audience,
+      iat: now,
+      exp: exp
+    };
+
+    const base64Header = Buffer.from(JSON.stringify(header)).toString('base64url');
+    const base64Payload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+
+    const signature = createHmac('sha256', this.accessKey)
+      .update(`${base64Header}.${base64Payload}`)
+      .digest('base64url');
+
+    return `${base64Header}.${base64Payload}.${signature}`;
+  }
+
+  /**
+   * Generate negotiate response for SignalR client.
+   * Returns the SignalR service URL and access token.
+   */
+  async negotiate(userId?: string): Promise<{ url: string; accessToken: string }> {
+    const clientUserId = userId || `user-${Date.now()}`;
+    const accessToken = this.generateToken(clientUserId);
+
+    // The URL format for Azure SignalR Service (client endpoint)
+    const url = `${this.endpoint}/client/?hub=${this.hubName}`;
+
+    console.log(`Negotiate for user ${clientUserId}: ${url}`);
+    return { url, accessToken };
+  }
+
+  /**
+   * Broadcast a message to a specific group using REST API.
    */
   async broadcastToRoom(roomid: string, message: ChatMessage): Promise<void> {
-    await this.serviceClient.group(roomid).sendToAll({
-      type: 'message',
-      data: message,
-    });
+    const url = `${this.endpoint}/api/v1/hubs/${this.hubName}/groups/${roomid}`;
+    const token = this.generateServerToken();
+
+    console.log(`Broadcasting to room ${roomid}: ${url}`);
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          target: 'ReceiveMessage',
+          arguments: [message]
+        })
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error(`Failed to broadcast to room ${roomid}: ${response.status} ${response.statusText} - ${text}`);
+      } else {
+        console.log(`Message broadcast to room ${roomid} successful`);
+      }
+    } catch (error) {
+      console.error('Error broadcasting to room:', error);
+    }
   }
 
   /**
    * Broadcast a message to all connected clients.
    */
   async broadcastToAll(message: ChatMessage): Promise<void> {
-    await this.serviceClient.sendToAll({
-      type: 'message',
-      data: message,
-    });
+    const url = `${this.endpoint}/api/v1/hubs/${this.hubName}`;
+    const token = this.generateServerToken();
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          target: 'ReceiveMessage',
+          arguments: [message]
+        })
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to broadcast to all: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error broadcasting to all:', error);
+    }
   }
 
   /**
    * Add a connection to a group (room).
    */
   async addToGroup(connectionId: string, roomid: string): Promise<void> {
-    await this.serviceClient.group(roomid).addConnection(connectionId);
+    const url = `${this.endpoint}/api/v1/hubs/${this.hubName}/groups/${roomid}/connections/${connectionId}`;
+    const token = await this.generateToken('server');
+
+    try {
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to add to group: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error adding to group:', error);
+    }
   }
 
   /**
    * Remove a connection from a group (room).
    */
   async removeFromGroup(connectionId: string, roomid: string): Promise<void> {
-    await this.serviceClient.group(roomid).removeConnection(connectionId);
+    const url = `${this.endpoint}/api/v1/hubs/${this.hubName}/groups/${roomid}/connections/${connectionId}`;
+    const token = await this.generateToken('server');
+
+    try {
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to remove from group: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error removing from group:', error);
+    }
   }
 }
