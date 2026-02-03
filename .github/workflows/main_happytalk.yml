@@ -42,6 +42,7 @@ jobs:
             node_modules/
             package.json
             package-lock.json
+            server.js
 
   deploy:
     runs-on: ubuntu-latest
