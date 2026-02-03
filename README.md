@@ -6,7 +6,10 @@ A modern Progressive Web Application (PWA) for real-time chat built with Angular
 
 - **Progressive Web App (PWA)**: Installable on any device, works offline
 - **Real-time Messaging**: Azure SignalR for instant message delivery
+- **Authentication**: Email/password registration + Google OAuth 2.0 sign-in
+- **Admin Approval System**: Access requests reviewed by administrators
 - **Persistent Chat History**: Cosmos DB SQL for message storage
+- **File Storage**: Azure Blob Storage for avatars and file uploads
 - **Co-hosted Architecture**: Angular frontend and Fastify backend in single Azure App Service
 - **Service Worker**: Caches assets and optimizes API calls
 - **Responsive Design**: Works seamlessly on desktop, tablet, and mobile
@@ -21,6 +24,8 @@ A modern Progressive Web Application (PWA) for real-time chat built with Angular
   - App Service (HappyTalk)
   - Azure SignalR Service (tw-signalr-occupier)
   - Cosmos DB SQL API (cosmoskhreq3, database: khRequest)
+  - Azure Blob Storage (happytalkstorage)
+- Google OAuth 2.0 credentials (optional, for Google sign-in)
 
 ## 🔧 Environment Variables
 
@@ -32,8 +37,13 @@ Configure these in Azure App Service Application Settings:
 | `COSMOS_ENDPOINT` | Cosmos DB endpoint URL | `https://cosmoskhreq3.documents.azure.com:443/` |
 | `COSMOS_KEY` | Cosmos DB primary key | `xxxxxx==` |
 | `COSMOS_DATABASE_NAME` | Database name | `khRequest` |
-| `COSMOS_CONTAINER_NAME` | Container name (optional) | `chat_messages` |
-| `SIGNALR_HUB_NAME` | SignalR hub name (optional) | `chat` |
+| `COSMOS_CONTAINER_NAME` | Container name (optional) | `chat_messages` || `AZURE_STORAGE_CONNECTION_STRING` | Blob storage connection string | `DefaultEndpointsProtocol=https;AccountName=...` |
+| `BLOB_CONTAINER_NAME` | Blob container name | `$web` |
+| `BLOB_PUBLIC_URL` | Public blob URL | `https://happytalkstorage.z1.web.core.windows.net/` |
+| `PRIMARY_ADMIN_EMAIL` | Primary administrator email | `naprikovsky@gmail.com` |
+| `JWT_SECRET` | JWT token secret key | Random 64-character string |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID (optional) | `xxxxx.apps.googleusercontent.com` |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret (optional) | `GOCSPX-xxxxx` || `SIGNALR_HUB_NAME` | SignalR hub name (optional) | `chat` |
 | `PORT` | Server port (optional) | `3000` (default) |
 | `LOG_LEVEL` | Logging level (optional) | `info` |
 | `CHAT_TTL_SECONDS` | Message retention TTL (optional) | `2592000` (30 days) |
@@ -150,16 +160,21 @@ Option C: VS Code Azure Extension
 │  ┌─────────────────┐    ┌─────────────────────────────────┐ │
 │  │  Fastify Server │    │    Static Files (Angular)       │ │
 │  │  /api/**        │    │    dist/happy-talk/browser      │ │
+│  │  - Auth (JWT)   │    │                                 │ │
+│  │  - Google OAuth │    │                                 │ │
 │  └────────┬────────┘    └─────────────────────────────────┘ │
 │           │                                                 │
 └───────────┼─────────────────────────────────────────────────┘
             │
-    ┌───────┴───────┐
-    │               │
-┌───▼───┐     ┌─────▼─────┐
-│ Azure │     │  Cosmos   │
-│SignalR│     │  DB SQL   │
-│Service│     │(khRequest)│
+    ┌───────┴───────────┐
+    │                   │
+┌───▼───┐     ┌─────▼─────┐     ┌──────▼──────┐
+│ Azure │     │  Cosmos   │     │    Blob     │
+│SignalR│     │  DB SQL   │     │  Storage    │
+│Service│     │(khRequest)│     │(avatars/    │
+│       │     │- messages │     │ uploads)    │
+│       │     │- users    │     └─────────────┘
+│       │     │- requests │
 └───────┘     └───────────┘
 ```
 
@@ -204,6 +219,7 @@ Chat-HappyTalk/
 
 ## 🔌 API Endpoints
 
+### Chat
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/health` | Health check |
@@ -212,6 +228,23 @@ Chat-HappyTalk/
 | POST | `/api/messages` | Send a new message |
 | POST | `/api/rooms/:roomid/join` | Join a chat room |
 | POST | `/api/rooms/:roomid/leave` | Leave a chat room |
+
+### Authentication (Planned)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/auth/register` | Register with email/password |
+| POST | `/auth/login` | Login with email/password |
+| POST | `/auth/google` | Google OAuth callback |
+| POST | `/auth/request-access` | Request admin approval |
+| GET | `/auth/me` | Get current user profile |
+| POST | `/auth/refresh` | Refresh JWT token |
+
+### Admin (Planned)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/admin/access-requests` | List pending access requests |
+| POST | `/admin/access-requests/:id/approve` | Approve user access |
+| POST | `/admin/access-requests/:id/reject` | Reject user access |
 
 ## ♿ Accessibility Features
 
@@ -227,6 +260,11 @@ Chat-HappyTalk/
 - Never commit connection strings or keys to source control
 - Enable HTTPS only in production
 - Configure CORS appropriately for your domain
+- **JWT tokens** expire after 24 hours (configurable)
+- **Admin approval required** for all new user registrations
+- **Primary admin**: `naprikovsky@gmail.com` (configured in settings)
+- Use strong, randomly generated JWT secret (min 64 characters)
+- Google OAuth credentials should be kept secure and rotated regularly
 
 ## 📱 PWA Installation
 
@@ -250,4 +288,4 @@ This project is open source and available under the MIT License.
 
 ---
 
-Built with ❤️ using Angular 21, Fastify, Azure SignalR, and Cosmos DB
+Built with ❤️ using Angular 21, Fastify, Azure SignalR, Cosmos DB, and Azure Blob Storage
