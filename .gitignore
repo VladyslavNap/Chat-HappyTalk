@@ -50,3 +50,5 @@ azure-appsettings.local.json
 .env.local
 .env.production
 azure-appsettings.json
+.env.example
+/.vs

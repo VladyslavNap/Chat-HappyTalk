@@ -1,10 +1,5 @@
 import { Injectable, OnDestroy, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import {
-  WebPubSubClient,
-  OnGroupDataMessageArgs,
-  OnServerDataMessageArgs,
-} from '@azure/web-pubsub-client';
 
 export interface ChatMessage {
   id: string;
@@ -30,15 +25,16 @@ export interface MessageListResponse {
 }
 
 /**
- * SignalR/Web PubSub service for real-time chat functionality.
- * Handles connection management, message sending, and receiving.
+ * Chat service for real-time messaging.
+ * Works with Azure SignalR Service in Serverless mode using polling.
  */
 @Injectable({
   providedIn: 'root',
 })
 export class SignalRService implements OnDestroy {
-  private client: WebPubSubClient | null = null;
   private currentroomid = signal<string>('public');
+  private pollingInterval: ReturnType<typeof setInterval> | null = null;
+  private knownMessageIds = new Set<string>();
 
   // Reactive state
   readonly connected = signal<boolean>(false);
@@ -51,87 +47,87 @@ export class SignalRService implements OnDestroy {
   constructor(private http: HttpClient) {}
 
   /**
-   * Connect to the SignalR/Web PubSub service.
+   * Connect to the chat service.
+   * Uses polling to fetch new messages every 2 seconds.
    */
-  async connect(roomid: string = 'public', userId?: string): Promise<void> {
-    if (this.client) {
-      await this.disconnect();
-    }
+  async connect(roomid: string = 'public', _userId?: string): Promise<void> {
+    await this.disconnect();
 
     this.currentroomid.set(roomid);
     this.connectionError.set(null);
 
     try {
-      // Get connection URL from backend negotiate endpoint
-      const negotiateUrl = userId
-        ? `/api/negotiate?userId=${encodeURIComponent(userId)}`
-        : '/api/negotiate';
+      console.log('Connecting to chat service (Serverless mode with polling)...');
 
-      const response = await this.http.post<{ url: string }>(negotiateUrl, {}).toPromise();
+      // Start polling for new messages
+      this.startPolling();
+      this.connected.set(true);
+      console.log('Chat service connected');
 
-      if (!response?.url) {
-        throw new Error('Failed to get connection URL');
-      }
-
-      // Create Web PubSub client
-      this.client = new WebPubSubClient(response.url);
-
-      // Set up event handlers
-      this.client.on('connected', () => {
-        console.log('SignalR connected');
-        this.connected.set(true);
-        this.connectionError.set(null);
-        // Join the room group
-        this.client?.joinGroup(roomid);
-      });
-
-      this.client.on('disconnected', () => {
-        console.log('SignalR disconnected');
-        this.connected.set(false);
-      });
-
-      this.client.on('group-message', (e: OnGroupDataMessageArgs) => {
-        const data = e.message.data as { type?: string; data?: ChatMessage } | undefined;
-        if (data?.type === 'message' && data.data) {
-          this.addMessage(data.data);
-        }
-      });
-
-      this.client.on('server-message', (e: OnServerDataMessageArgs) => {
-        const data = e.message.data as { type?: string; data?: ChatMessage } | undefined;
-        if (data?.type === 'message' && data.data) {
-          this.addMessage(data.data);
-        }
-      });
-
-      // Start the connection
-      await this.client.start();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Connection failed';
       this.connectionError.set(errorMessage);
-      console.error('SignalR connection error:', error);
+      console.error('Chat connection error:', error);
       throw error;
     }
   }
 
   /**
-   * Disconnect from the SignalR service.
+   * Start polling for new messages.
    */
-  async disconnect(): Promise<void> {
-    if (this.client) {
+  private startPolling(): void {
+    // Poll every 2 seconds for new messages
+    this.pollingInterval = setInterval(async () => {
       try {
-        await this.client.stop();
+        await this.pollMessages();
       } catch (error) {
-        console.error('Error disconnecting:', error);
+        console.error('Polling error:', error);
       }
-      this.client = null;
-      this.connected.set(false);
+    }, 2000);
+  }
+
+  /**
+   * Poll for new messages from the server.
+   */
+  private async pollMessages(): Promise<void> {
+    const room = this.currentroomid();
+    const response = await this.http.get<MessageListResponse>(`/api/messages/${room}?limit=50`).toPromise();
+
+    if (response?.messages) {
+      const currentMessages = this.messages();
+
+      // Find new messages that we haven't seen yet
+      const newMessages = response.messages.filter(m => !this.knownMessageIds.has(m.id));
+
+      if (newMessages.length > 0) {
+        // Add new message IDs to known set
+        newMessages.forEach(m => this.knownMessageIds.add(m.id));
+
+        // Merge and sort by createdAt
+        const allMessages = [...currentMessages, ...newMessages];
+        allMessages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        this.messages.set(allMessages);
+
+        console.log(`Received ${newMessages.length} new message(s)`);
+      }
     }
   }
 
   /**
+   * Disconnect from the chat service.
+   */
+  async disconnect(): Promise<void> {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
+    this.connected.set(false);
+    this.knownMessageIds.clear();
+  }
+
+  /**
    * Send a message via the backend API.
-   * The backend will persist to Cosmos DB and broadcast via SignalR.
+   * The backend will persist to Cosmos DB and broadcast via SignalR REST API.
    */
   async sendMessage(text: string, senderName: string, senderId?: string): Promise<ChatMessage> {
     const request: SendMessageRequest = {
@@ -148,6 +144,10 @@ export class SignalRService implements OnDestroy {
       throw new Error('Failed to send message');
     }
 
+    // Add the sent message immediately to local state and known IDs
+    this.addMessage(response);
+    this.knownMessageIds.add(response.id);
+
     return response;
   }
 
@@ -161,6 +161,8 @@ export class SignalRService implements OnDestroy {
     const response = await this.http.get<MessageListResponse>(url).toPromise();
 
     if (response?.messages) {
+      // Add all loaded message IDs to known set
+      response.messages.forEach(m => this.knownMessageIds.add(m.id));
       this.messages.set(response.messages);
       return response.messages;
     }
@@ -173,13 +175,13 @@ export class SignalRService implements OnDestroy {
    */
   clearMessages(): void {
     this.messages.set([]);
+    this.knownMessageIds.clear();
   }
 
   /**
-   * Add a message to the local state (for real-time updates).
+   * Add a message to the local state.
    */
   private addMessage(message: ChatMessage): void {
-    // Avoid duplicates based on id or clientId
     const existing = this.messages();
     const isDuplicate = existing.some(
       (m: ChatMessage) => m.id === message.id || (message.clientId && m.clientId === message.clientId)

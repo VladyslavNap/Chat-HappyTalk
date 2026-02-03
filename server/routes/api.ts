@@ -17,11 +17,29 @@ export async function registerApiRoutes(
     return reply.send({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  // SignalR negotiate endpoint - returns WebSocket URL with access token
+  // SignalR negotiate endpoint - the SignalR client calls /api/chat/negotiate automatically
   fastify.post(
-    '/api/negotiate',
+    '/api/chat/negotiate',
     async (
       request: FastifyRequest<{ Querystring: { userId?: string } }>,
+      reply: FastifyReply
+    ) => {
+      try {
+        const { userId } = request.query;
+        const result = await signalrService.negotiate(userId);
+        return reply.send(result);
+      } catch (error) {
+        fastify.log.error(error, 'Negotiate failed');
+        return reply.status(500).send({ error: 'Failed to negotiate connection' });
+      }
+    }
+  );
+
+  // Also support GET for negotiate (some clients use GET)
+  fastify.get(
+    '/api/chat/negotiate',
+    async (
+      request: FastifyRequest<{ Querystring: { userId?: string; negotiateVersion?: string } }>,
       reply: FastifyReply
     ) => {
       try {

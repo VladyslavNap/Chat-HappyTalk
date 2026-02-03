@@ -63,23 +63,45 @@ npm install
 
 ## 🏃‍♂️ Development
 
-### Frontend only (Angular dev server):
+### Frontend Only (No Azure Required)
 ```bash
 npm start
+# Navigate to http://localhost:4200/
 ```
-Navigate to `http://localhost:4200/`
 
-### Full stack (with backend):
+### Full Stack with Azure Services
+
+**Quick Start:**
+
 ```bash
-# Set environment variables
-export AZURE_SIGNALR_CONNECTION_STRING="..."
-export COSMOS_ENDPOINT="..."
-export COSMOS_KEY="..."
-export COSMOS_DATABASE_NAME="khRequest"
+# 1. Create .env file with your Azure credentials
+cp .env.example .env  # or Copy-Item on Windows
 
-# Build and run
-npm run build:all
-npm run start:server
+# Edit .env and add:
+#   - AZURE_SIGNALR_CONNECTION_STRING
+#   - COSMOS_KEY
+
+# 2. Run (automatically loads .env)
+npm run dev
+
+# Navigate to http://localhost:3000/
+```
+
+**Using Setup Script (optional, validates .env):**
+```powershell
+# Windows only - validates credentials before starting
+.\setup-dev.ps1
+```
+
+#### Getting Azure Credentials:
+
+1. **SignalR Connection String:**
+   - Azure Portal → Search `tw-signalr-occupier` → Keys → Primary Connection String
+
+2. **Cosmos DB Primary Key:**
+   - Azure Portal → Search `cosmoskhreq3` → Keys → Primary Key
+
+> **Note:** The server automatically loads environment variables from `.env` file for local development. In production (Azure App Service), use Application Settings instead.
 ```
 Navigate to `http://localhost:3000/`
 

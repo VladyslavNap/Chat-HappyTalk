@@ -25,17 +25,33 @@ npm start
 ```
 
 ### Full stack (with Azure services):
-```bash
-# Set environment variables
-export AZURE_SIGNALR_CONNECTION_STRING="Endpoint=https://...;AccessKey=...;Version=1.0;"
-export COSMOS_ENDPOINT="https://cosmoskhreq3.documents.azure.com:443/"
-export COSMOS_KEY="your-cosmos-key"
-export COSMOS_DATABASE_NAME="khRequest"
 
-# Build and run
-npm run build:all
-npm run start:server
+**Step 1: Set up environment variables**
+
+```powershell
+# Copy the template
+Copy-Item .env.example .env
+
+# Edit .env and add your Azure credentials
+notepad .env
+```
+
+You need to set:
+- `AZURE_SIGNALR_CONNECTION_STRING` - From Azure Portal → `tw-signalr-occupier` → Keys
+- `COSMOS_KEY` - From Azure Portal → `cosmoskhreq3` → Keys → Primary Key
+
+**Step 2: Build and run**
+
+```bash
+# The server automatically loads .env file
+npm run dev
+
 # App runs at http://localhost:3000
+```
+
+**Alternative: Use setup script (validates .env)**
+```powershell
+.\setup-dev.ps1
 ```
 
 ## 🏗️ Build
@@ -76,10 +92,19 @@ In Azure Portal → App Service → Configuration:
 
 ### 3. Deploy
 
+**PowerShell (Windows):**
+```powershell
+npm run build:all
+az webapp deploy --name HappyTalk --src-path . --type zip
+```
+
+**Bash (Linux/macOS):**
 ```bash
 npm run build:all
 az webapp deploy --name HappyTalk --src-path . --type zip
 ```
+
+**Or use GitHub Actions** (recommended - see `.github/workflows/main_happytalk.yml`)
 
 ## ✨ Features
 

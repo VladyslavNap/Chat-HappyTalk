@@ -44,9 +44,12 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
+                  "maximumWarning": "5kB",
                   "maximumError": "8kB"
                 }
+              ],
+              "allowedCommonJsDependencies": [
+                "@azure/web-pubsub-client"
               ],
               "outputHashing": "all",
               "serviceWorker": "ngsw-config.json"

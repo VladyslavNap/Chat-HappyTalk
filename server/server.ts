@@ -1,3 +1,7 @@
+// Load environment variables from .env file (for local development)
+import { config } from 'dotenv';
+config();
+
 import Fastify, { FastifyRequest, FastifyReply } from 'fastify';
 import fastifyStatic from '@fastify/static';
 import fastifyCors from '@fastify/cors';
@@ -12,6 +16,9 @@ import { registerApiRoutes } from './routes/api.js';
  * - Exposes /api/** routes for chat functionality
  * - Integrates Azure SignalR for real-time messaging
  * - Persists messages to Cosmos DB SQL
+ * 
+ * Environment variables are loaded from .env file for local development.
+ * In production (Azure App Service), use Application Settings instead.
  */
 async function startServer(): Promise<void> {
   const fastify = Fastify({
@@ -24,7 +31,8 @@ async function startServer(): Promise<void> {
   await fastify.register(fastifyCors, {
     origin: process.env.CORS_ORIGIN || true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true,
   });
 
   // Initialize services
