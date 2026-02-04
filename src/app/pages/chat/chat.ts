@@ -5,9 +5,11 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { SignalRService, ChatMessage } from '../../services/signalr.service';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService } from '../../services/notification.service';
 import { UserList } from '../../components/user-list/user-list';
 import { RoomList } from '../../components/room-list/room-list';
 import { CreateGroupComponent } from '../../components/create-group/create-group.component';
+import { ConfirmationDialogComponent } from '../../components/confirmation-dialog/confirmation-dialog.component';
 import { UserProfile } from '../../models/auth.model';
 import { createDMRoomId } from '../../models/dm.model';
 import { Room } from '../../models/room.model';
@@ -26,13 +28,14 @@ type ChatView = 'room' | 'dm';
 
 @Component({
   selector: 'app-chat',
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, UserList, RoomList, CreateGroupComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, UserList, RoomList, CreateGroupComponent, ConfirmationDialogComponent],
   templateUrl: './chat.html',
   styleUrl: './chat.scss',
 })
 export class Chat implements OnInit, OnDestroy {
   private signalrService = inject(SignalRService);
   private authService = inject(AuthService);
+  private notificationService = inject(NotificationService);
   private http = inject(HttpClient);
   private messagesContainer = viewChild<ElementRef<HTMLDivElement>>('messagesContainer');
   private createGroupComponent = viewChild<CreateGroupComponent>('createGroup');
@@ -51,6 +54,10 @@ export class Chat implements OnInit, OnDestroy {
   editingMessageText = signal('');
   isSavingEdit = signal(false);
   isDeletingMessage = signal(false);
+  
+  // Confirmation dialog state
+  showDeleteConfirmation = signal<boolean>(false);
+  messageToDelete = signal<DisplayMessage | null>(null);
 
   // Chat view state
   currentView = signal<ChatView>('room');
@@ -341,7 +348,7 @@ export class Chat implements OnInit, OnDestroy {
 
     const newText = this.editingMessageText().trim();
     if (!newText) {
-      alert('Message text cannot be empty');
+      this.notificationService.error('Message text cannot be empty');
       return;
     }
 
@@ -370,7 +377,7 @@ export class Chat implements OnInit, OnDestroy {
       }
     } catch (error) {
       console.error('Failed to edit message:', error);
-      alert('Failed to edit message. Please try again.');
+      this.notificationService.error('Failed to edit message. Please try again.');
     } finally {
       this.isSavingEdit.set(false);
     }
@@ -387,7 +394,7 @@ export class Chat implements OnInit, OnDestroy {
   /**
    * Delete a message (admin only).
    */
-  async deleteMessage(message: DisplayMessage): Promise<void> {
+  deleteMessage(message: DisplayMessage): void {
     if (!this.isSuperAdmin) {
       return;
     }
@@ -398,12 +405,28 @@ export class Chat implements OnInit, OnDestroy {
       return;
     }
 
-    const confirmed = confirm(`Delete this message?\n\n"${message.text}"\n\nThis action cannot be undone.`);
-    if (!confirmed) {
+    // Show confirmation dialog
+    this.messageToDelete.set(message);
+    this.showDeleteConfirmation.set(true);
+  }
+
+  /**
+   * Confirm and execute message deletion.
+   */
+  async confirmDeleteMessage(): Promise<void> {
+    const message = this.messageToDelete();
+    if (!message) {
+      return;
+    }
+
+    // Get the original ChatMessage to access roomid
+    const chatMessage = this.signalrService.messages().find(m => m.id === message.id);
+    if (!chatMessage) {
       return;
     }
 
     this.isDeletingMessage.set(true);
+    this.showDeleteConfirmation.set(false);
 
     try {
       await this.http.delete(
@@ -415,10 +438,19 @@ export class Chat implements OnInit, OnDestroy {
       console.log('Message deleted successfully');
     } catch (error) {
       console.error('Failed to delete message:', error);
-      alert('Failed to delete message. Please try again.');
+      this.notificationService.error('Failed to delete message. Please try again.');
     } finally {
       this.isDeletingMessage.set(false);
+      this.messageToDelete.set(null);
     }
+  }
+
+  /**
+   * Cancel message deletion.
+   */
+  cancelDeleteMessage(): void {
+    this.showDeleteConfirmation.set(false);
+    this.messageToDelete.set(null);
   }
 
   /**

@@ -53,9 +53,17 @@ export class ProfileComponent implements OnInit {
     this.errorMessage.set(null);
     this.successMessage.set(null);
 
-    // TODO: Implement update display name API call
-    // For now, just simulate success
+    // NOTE: Display name update API endpoint is not yet implemented on the backend.
+    // This functionality is currently client-side only for UI demonstration purposes.
+    // The display name is stored in the authentication state but not persisted to the database.
+    // TODO: Implement backend API endpoint: PATCH /api/users/profile to update display name
     setTimeout(() => {
+      // Update display name in local auth state
+      const user = this.currentUser();
+      if (user) {
+        this.authService.updateCurrentUser({ ...user, displayName: name });
+      }
+      
       this.isSaving.set(false);
       this.isEditingName.set(false);
       this.successMessage.set('Display name updated successfully!');
