@@ -53,3 +53,4 @@ azure-appsettings.json
 .env.example
 /.vs
 /.playwright-mcp
+/server.log
