@@ -2,6 +2,8 @@ import { CosmosClient, Container, Database } from '@azure/cosmos';
 import { ChatMessage, MessageListResponse } from '../models/message.js';
 import { User } from '../models/user.js';
 import { Room } from '../models/room.js';
+import { Contact, UserSearchResult } from '../models/contact.js';
+import { Group, GroupDetails, GroupMember } from '../models/group.js';
 
 /**
  * Cosmos DB SQL repository for chat message persistence, user management, and room management.
@@ -13,6 +15,8 @@ export class CosmosService {
   private container!: Container;
   private userContainer!: Container;
   private roomContainer!: Container;
+  private contactContainer!: Container;
+  private groupContainer!: Container;
   private initialized = false;
 
   constructor() {
@@ -36,6 +40,8 @@ export class CosmosService {
     const containerName = process.env.COSMOS_CONTAINER_NAME || 'chat_messages';
     const userContainerName = 'users';
     const roomContainerName = 'rooms';
+    const contactContainerName = 'contacts';
+    const groupContainerName = 'groups';
 
     // Create database if not exists
     const { database } = await this.client.databases.createIfNotExists({
@@ -65,8 +71,22 @@ export class CosmosService {
     });
     this.roomContainer = roomContainer;
 
+    // Create contact container with userId as partition key
+    const { container: contactContainer } = await this.database.containers.createIfNotExists({
+      id: contactContainerName,
+      partitionKey: { paths: ['/userId'] },
+    });
+    this.contactContainer = contactContainer;
+
+    // Create group container with id as partition key
+    const { container: groupContainer } = await this.database.containers.createIfNotExists({
+      id: groupContainerName,
+      partitionKey: { paths: ['/id'] },
+    });
+    this.groupContainer = groupContainer;
+
     this.initialized = true;
-    console.log(`Cosmos DB initialized: ${databaseName}/${containerName}, ${userContainerName}, ${roomContainerName}`);
+    console.log(`Cosmos DB initialized: ${databaseName}/${containerName}, ${userContainerName}, ${roomContainerName}, ${contactContainerName}, ${groupContainerName}`);
   }
 
   /**
@@ -349,5 +369,403 @@ export class CosmosService {
       console.error('Failed to delete room:', error);
       return false;
     }
+  }
+
+  // ==================== Contact Management Methods ====================
+
+  /**
+   * Get all contacts for a user.
+   */
+  async getContacts(userId: string, includeOffline: boolean = true): Promise<Contact[]> {
+    await this.initialize();
+    try {
+      let query = `SELECT * FROM c WHERE c.userId = @userId`;
+      if (!includeOffline) {
+        query += ` AND c.contactStatus = 'online'`;
+      }
+      query += ` ORDER BY c.addedAt DESC`;
+
+      const { resources } = await this.contactContainer.items
+        .query({
+          query,
+          parameters: [{ name: '@userId', value: userId }],
+        })
+        .fetchAll();
+
+      return resources as Contact[];
+    } catch (error) {
+      console.error('Failed to get contacts:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Search users by username, display name, or email.
+   */
+  async searchUsers(currentUserId: string, query: string, limit: number = 20): Promise<UserSearchResult[]> {
+    await this.initialize();
+    try {
+      const searchQuery = `
+        SELECT TOP @limit c.id, c.username, c.displayName, c.email, c.avatarUrl, c.status
+        FROM c
+        WHERE c.id != @userId
+        AND (
+          CONTAINS(LOWER(c.username), LOWER(@query))
+          OR CONTAINS(LOWER(c.displayName), LOWER(@query))
+          OR CONTAINS(LOWER(c.email), LOWER(@query))
+        )
+        ORDER BY c.displayName
+      `;
+
+      const { resources } = await this.userContainer.items
+        .query({
+          query: searchQuery,
+          parameters: [
+            { name: '@userId', value: currentUserId },
+            { name: '@query', value: query },
+            { name: '@limit', value: limit },
+          ],
+        })
+        .fetchAll();
+
+      // Check if each user is already a contact
+      const results: UserSearchResult[] = [];
+      for (const user of resources as User[]) {
+        const existingContact = await this.getContactByUserIds(currentUserId, user.id);
+        results.push({
+          ...user,
+          isContact: !!existingContact,
+        });
+      }
+
+      return results;
+    } catch (error) {
+      console.error('Failed to search users:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Create a new contact.
+   */
+  async createContact(contact: Contact): Promise<Contact> {
+    await this.initialize();
+    const { resource } = await this.contactContainer.items.create(contact);
+    return resource as Contact;
+  }
+
+  /**
+   * Get contact by contact ID.
+   */
+  async getContactById(contactId: string): Promise<Contact | null> {
+    await this.initialize();
+    try {
+      const { resources } = await this.contactContainer.items
+        .query({
+          query: 'SELECT * FROM c WHERE c.id = @contactId',
+          parameters: [{ name: '@contactId', value: contactId }],
+        })
+        .fetchAll();
+
+      return resources.length > 0 ? (resources[0] as Contact) : null;
+    } catch (error) {
+      console.error('Failed to get contact by ID:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get contact relationship between two users.
+   */
+  async getContactByUserIds(userId: string, contactUserId: string): Promise<Contact | null> {
+    await this.initialize();
+    try {
+      const { resources } = await this.contactContainer.items
+        .query({
+          query: 'SELECT * FROM c WHERE c.userId = @userId AND c.contactUserId = @contactUserId',
+          parameters: [
+            { name: '@userId', value: userId },
+            { name: '@contactUserId', value: contactUserId },
+          ],
+        })
+        .fetchAll();
+
+      return resources.length > 0 ? (resources[0] as Contact) : null;
+    } catch (error) {
+      console.error('Failed to get contact by user IDs:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update a contact.
+   */
+  async updateContact(contactId: string, userId: string, updates: Partial<Contact>): Promise<Contact | null> {
+    await this.initialize();
+    try {
+      const contact = await this.getContactById(contactId);
+      if (!contact) {
+        return null;
+      }
+
+      const updatedContact = {
+        ...contact,
+        ...updates,
+      };
+
+      const { resource } = await this.contactContainer.item(contactId, userId).replace(updatedContact);
+      return resource as Contact;
+    } catch (error) {
+      console.error('Failed to update contact:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Delete a contact.
+   */
+  async deleteContact(contactId: string, userId: string): Promise<void> {
+    await this.initialize();
+    await this.contactContainer.item(contactId, userId).delete();
+  }
+
+  /**
+   * Get online status for multiple contacts.
+   */
+  async getContactsStatus(contactIds: string[]): Promise<{ [userId: string]: { status: string; lastSeenAt?: string } }> {
+    await this.initialize();
+    try {
+      if (contactIds.length === 0) {
+        return {};
+      }
+
+      const placeholders = contactIds.map((_, i) => `@id${i}`).join(',');
+      const parameters = contactIds.map((id, i) => ({ name: `@id${i}`, value: id }));
+
+      const { resources } = await this.userContainer.items
+        .query({
+          query: `SELECT c.id, c.status, c.lastSeenAt FROM c WHERE c.id IN (${placeholders})`,
+          parameters,
+        })
+        .fetchAll();
+
+      const statuses: { [userId: string]: { status: string; lastSeenAt?: string } } = {};
+      for (const user of resources as User[]) {
+        statuses[user.id] = {
+          status: user.status || 'offline',
+          lastSeenAt: user.lastSeenAt,
+        };
+      }
+
+      return statuses;
+    } catch (error) {
+      console.error('Failed to get contacts status:', error);
+      return {};
+    }
+  }
+
+  // ==================== Group Management Methods ====================
+
+  /**
+   * Create a new group.
+   */
+  async createGroup(group: Group): Promise<Group> {
+    await this.initialize();
+    const { resource } = await this.groupContainer.items.create(group);
+    return resource as Group;
+  }
+
+  /**
+   * Get group by ID.
+   */
+  async getGroupById(groupId: string): Promise<Group | null> {
+    await this.initialize();
+    try {
+      const { resource } = await this.groupContainer.item(groupId, groupId).read();
+      return resource as Group;
+    } catch (error) {
+      console.error('Failed to get group:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get all groups for a user.
+   */
+  async getUserGroups(userId: string): Promise<Group[]> {
+    await this.initialize();
+    try {
+      const { resources } = await this.groupContainer.items
+        .query({
+          query: `SELECT * FROM c WHERE ARRAY_CONTAINS(c.members, @userId) AND c.isActive = true ORDER BY c.updatedAt DESC`,
+          parameters: [{ name: '@userId', value: userId }],
+        })
+        .fetchAll();
+
+      return resources as Group[];
+    } catch (error) {
+      console.error('Failed to get user groups:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get group details with member information.
+   */
+  async getGroupDetails(groupId: string): Promise<GroupDetails | null> {
+    await this.initialize();
+    try {
+      const group = await this.getGroupById(groupId);
+      if (!group) {
+        return null;
+      }
+
+      // Get member details
+      const memberDetails: GroupMember[] = [];
+      for (const memberId of group.members) {
+        const user = await this.getUserById(memberId);
+        if (user) {
+          memberDetails.push({
+            id: user.id,
+            username: user.username,
+            displayName: user.displayName,
+            avatarUrl: user.avatarUrl,
+            status: user.status,
+            isAdmin: group.admins.includes(memberId),
+            joinedAt: group.createdAt, // TODO: Track individual join times
+          });
+        }
+      }
+
+      return {
+        ...group,
+        memberDetails,
+      };
+    } catch (error) {
+      console.error('Failed to get group details:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update a group.
+   */
+  async updateGroup(groupId: string, updates: Partial<Group>): Promise<Group> {
+    await this.initialize();
+    const group = await this.getGroupById(groupId);
+    if (!group) {
+      throw new Error('Group not found');
+    }
+
+    const updatedGroup = {
+      ...group,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const { resource } = await this.groupContainer.item(groupId, groupId).replace(updatedGroup);
+    return resource as Group;
+  }
+
+  /**
+   * Add members to a group.
+   */
+  async addGroupMembers(groupId: string, memberIds: string[]): Promise<Group> {
+    await this.initialize();
+    const group = await this.getGroupById(groupId);
+    if (!group) {
+      throw new Error('Group not found');
+    }
+
+    const updatedMembers = [...new Set([...group.members, ...memberIds])];
+    return this.updateGroup(groupId, { members: updatedMembers });
+  }
+
+  /**
+   * Remove a member from a group.
+   */
+  async removeGroupMember(groupId: string, memberId: string): Promise<Group> {
+    await this.initialize();
+    const group = await this.getGroupById(groupId);
+    if (!group) {
+      throw new Error('Group not found');
+    }
+
+    const updatedMembers = group.members.filter((id) => id !== memberId);
+    const updatedAdmins = group.admins.filter((id) => id !== memberId);
+
+    return this.updateGroup(groupId, { members: updatedMembers, admins: updatedAdmins });
+  }
+
+  // ==================== Additional User Methods ====================
+
+  /**
+   * Update user avatar URL.
+   */
+  async updateUserAvatar(userId: string, avatarUrl?: string): Promise<void> {
+    await this.initialize();
+    try {
+      const user = await this.getUserById(userId);
+      if (user) {
+        user.avatarUrl = avatarUrl;
+        await this.userContainer.item(userId, userId).replace(user);
+      }
+    } catch (error) {
+      console.error('Failed to update user avatar:', error);
+    }
+  }
+
+  /**
+   * Update user last seen timestamp.
+   */
+  async updateUserLastSeen(userId: string, timestamp: string): Promise<void> {
+    await this.initialize();
+    try {
+      const user = await this.getUserById(userId);
+      if (user) {
+        user.lastSeenAt = timestamp;
+        await this.userContainer.item(userId, userId).replace(user);
+      }
+    } catch (error) {
+      console.error('Failed to update user last seen:', error);
+    }
+  }
+
+  // ==================== Message Admin Methods ====================
+
+  /**
+   * Get a message by ID.
+   */
+  async getMessageById(messageId: string): Promise<ChatMessage | null> {
+    await this.initialize();
+    try {
+      const { resources } = await this.container.items
+        .query({
+          query: 'SELECT * FROM c WHERE c.id = @messageId',
+          parameters: [{ name: '@messageId', value: messageId }],
+        })
+        .fetchAll();
+
+      return resources.length > 0 ? (resources[0] as ChatMessage) : null;
+    } catch (error) {
+      console.error('Failed to get message by ID:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update a message (for admin editing).
+   */
+  async updateMessage(message: ChatMessage): Promise<void> {
+    await this.initialize();
+    await this.container.item(message.id, message.roomid).replace(message);
+  }
+
+  /**
+   * Delete a message (for admin deletion).
+   */
+  async deleteMessage(messageId: string, roomid: string): Promise<void> {
+    await this.initialize();
+    await this.container.item(messageId, roomid).delete();
   }
 }

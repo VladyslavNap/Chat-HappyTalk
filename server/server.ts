@@ -5,11 +5,16 @@ config();
 import Fastify, { FastifyRequest, FastifyReply } from 'fastify';
 import fastifyStatic from '@fastify/static';
 import fastifyCors from '@fastify/cors';
+import fastifyMultipart from '@fastify/multipart';
 import { join } from 'path';
 import { CosmosService } from './services/cosmos.service.js';
 import { SignalRService } from './services/signalr.service.js';
 import { AuthService } from './services/auth.service.js';
+import { BlobStorageService } from './services/blob-storage.service.js';
 import { registerApiRoutes } from './routes/api.js';
+import { registerContactsRoutes } from './routes/contacts.js';
+import { registerGroupsRoutes } from './routes/groups.js';
+import { registerUploadRoutes } from './routes/upload.js';
 
 /**
  * HappyTalk Fastify Server
@@ -31,15 +36,24 @@ async function startServer(): Promise<void> {
   // CORS configuration for development
   await fastify.register(fastifyCors, {
     origin: process.env.CORS_ORIGIN || true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true,
+  });
+
+  // Register multipart/form-data support for file uploads
+  await fastify.register(fastifyMultipart, {
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB
+      files: 1, // Max 1 file per request
+    },
   });
 
   // Initialize services
   const cosmosService = new CosmosService();
   const signalrService = new SignalRService();
   const authService = new AuthService(cosmosService);
+  const blobStorageService = new BlobStorageService();
 
   try {
     await cosmosService.initialize();
@@ -53,6 +67,9 @@ async function startServer(): Promise<void> {
 
   // Register API routes
   await registerApiRoutes(fastify, cosmosService, signalrService, authService);
+  await registerContactsRoutes(fastify, cosmosService, signalrService, authService);
+  await registerGroupsRoutes(fastify, cosmosService, signalrService, authService);
+  await registerUploadRoutes(fastify, blobStorageService, cosmosService, signalrService, authService);
 
   // Serve Angular SPA static files
   // Use process.cwd() to get the project root directory

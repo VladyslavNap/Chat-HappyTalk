@@ -8,6 +8,8 @@ export interface ChatMessage {
   senderName: string;
   senderId?: string;
   createdAt: string;
+  editedAt?: string;
+  isEdited?: boolean;
   clientId?: string;
 }
 
@@ -190,6 +192,45 @@ export class SignalRService implements OnDestroy {
     if (!isDuplicate) {
       this.messages.update((msgs: ChatMessage[]) => [...msgs, message]);
     }
+  }
+
+  // ==================== Real-time Event Handlers ====================
+  // These methods would be called by a real SignalR connection
+  // For now, they are prepared for when WebSocket support is added
+
+  /**
+   * Handle message edited event (called when admin edits a message).
+   */
+  handleMessageEdited(editedMessage: ChatMessage): void {
+    this.messages.update((msgs) => 
+      msgs.map((m) => (m.id === editedMessage.id ? editedMessage : m))
+    );
+  }
+
+  /**
+   * Handle message deleted event (called when admin deletes a message).
+   */
+  handleMessageDeleted(messageId: string): void {
+    this.messages.update((msgs) => msgs.filter((m) => m.id !== messageId));
+    this.knownMessageIds.delete(messageId);
+  }
+
+  /**
+   * Handle user online event.
+   * This would update contact status in a real implementation.
+   */
+  handleUserOnline(data: { userId: string; userProfile: any }): void {
+    console.log('User came online:', data.userId);
+    // ContactsService will handle this via its own event handler
+  }
+
+  /**
+   * Handle user offline event.
+   * This would update contact status in a real implementation.
+   */
+  handleUserOffline(data: { userId: string }): void {
+    console.log('User went offline:', data.userId);
+    // ContactsService will handle this via its own event handler
   }
 
   ngOnDestroy(): void {

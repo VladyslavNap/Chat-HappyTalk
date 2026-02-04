@@ -20,6 +20,10 @@ export interface ChatMessage {
   senderId?: string;
   /** ISO 8601 timestamp */
   createdAt: string;
+  /** ISO 8601 timestamp of last edit (if edited) */
+  editedAt?: string;
+  /** Whether the message has been edited */
+  isEdited?: boolean;
   /** Client-generated ID for deduplication */
   clientId?: string;
   /** TTL in seconds (optional, for retention policy) */
@@ -43,6 +47,22 @@ export interface SendMessageRequest {
 export interface MessageListResponse {
   messages: ChatMessage[];
   continuationToken?: string;
+}
+
+export interface EditMessageRequest {
+  messageId: string;
+  text: string;
+}
+
+export interface DeleteMessageRequest {
+  messageId: string;
+  roomid: string;
+}
+
+export interface MessageActionResponse {
+  success: boolean;
+  message?: ChatMessage;
+  error?: string;
 }
 
 /**

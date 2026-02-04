@@ -1,0 +1,144 @@
+@if (showDialog()) {
+  <div class="modal-overlay" (click)="close()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Create Private Group</h3>
+        <button 
+          (click)="close()"
+          class="btn-close"
+          aria-label="Close">
+          ✕
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <!-- Group Name -->
+        <div class="form-group">
+          <label for="group-name">Group Name *</label>
+          <input 
+            id="group-name"
+            type="text"
+            [value]="groupName()"
+            (input)="groupName.set($any($event.target).value)"
+            placeholder="Enter group name"
+            class="form-input"
+            maxlength="50"
+            required
+            autofocus />
+          <small>{{ groupName().length }}/50</small>
+        </div>
+        
+        <!-- Group Description -->
+        <div class="form-group">
+          <label for="group-description">Description (optional)</label>
+          <textarea 
+            id="group-description"
+            [value]="groupDescription()"
+            (input)="groupDescription.set($any($event.target).value)"
+            placeholder="Enter group description"
+            class="form-textarea"
+            maxlength="200"
+            rows="3"></textarea>
+          <small>{{ groupDescription().length }}/200</small>
+        </div>
+        
+        <!-- Member Selection -->
+        <div class="form-group">
+          <div class="member-header">
+            <label>Select Members * ({{ selectedMemberIds().size }} selected)</label>
+            <div class="member-actions">
+              <button 
+                type="button"
+                (click)="selectAll()"
+                class="btn-link">
+                Select All
+              </button>
+              <button 
+                type="button"
+                (click)="deselectAll()"
+                class="btn-link">
+                Deselect All
+              </button>
+            </div>
+          </div>
+          
+          <div class="member-list">
+            @if (availableContacts().length === 0) {
+              <div class="empty-state-small">
+                <p>No contacts available. Add contacts first.</p>
+              </div>
+            }
+            
+            @for (contact of availableContacts(); track contact.id) {
+              <div 
+                class="member-item"
+                [class.selected]="isMemberSelected(contact.contactUserId)"
+                (click)="toggleMember(contact.contactUserId)">
+                
+                <div class="member-info">
+                  <div class="member-avatar">
+                    @if (contact.contactAvatarUrl) {
+                      <img [src]="contact.contactAvatarUrl" [alt]="contact.contactDisplayName" />
+                    } @else {
+                      <div class="avatar-placeholder">
+                        {{ (contact.nickname || contact.contactDisplayName).charAt(0).toUpperCase() }}
+                      </div>
+                    }
+                    @if (contact.contactStatus === 'online') {
+                      <span class="status-badge online">🟢</span>
+                    }
+                  </div>
+                  
+                  <div class="member-details">
+                    <div class="member-name">
+                      {{ contact.nickname || contact.contactDisplayName }}
+                    </div>
+                    @if (contact.contactStatus === 'online') {
+                      <span class="member-status">Online</span>
+                    } @else {
+                      <span class="member-status offline">Offline</span>
+                    }
+                  </div>
+                </div>
+                
+                <input 
+                  type="checkbox"
+                  [checked]="isMemberSelected(contact.contactUserId)"
+                  class="member-checkbox"
+                  (click)="$event.stopPropagation()" />
+              </div>
+            }
+          </div>
+        </div>
+        
+        <!-- Error Message -->
+        @if (errorMessage()) {
+          <div class="error-message">
+            {{ errorMessage() }}
+          </div>
+        }
+      </div>
+      
+      <div class="modal-footer">
+        <button 
+          type="button"
+          (click)="close()"
+          class="btn-secondary"
+          [disabled]="isSubmitting()">
+          Cancel
+        </button>
+        <button 
+          type="button"
+          (click)="createGroup()"
+          class="btn-primary"
+          [disabled]="!canSubmit() || isSubmitting()">
+          @if (isSubmitting()) {
+            Creating...
+          } @else {
+            Create Group
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

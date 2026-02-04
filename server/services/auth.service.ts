@@ -237,4 +237,38 @@ export class AuthService {
       return [];
     }
   }
+
+  /**
+   * Check if a user is super admin.
+   * Super admin email is defined in environment variable PRIMARY_ADMIN_EMAIL.
+   */
+  async isSuperAdmin(userId: string): Promise<boolean> {
+    try {
+      const primaryAdminEmail = process.env.PRIMARY_ADMIN_EMAIL;
+      if (!primaryAdminEmail) {
+        return false;
+      }
+
+      const user = await this.cosmosService.getUserById(userId);
+      if (!user) {
+        return false;
+      }
+
+      return user.email.toLowerCase() === primaryAdminEmail.toLowerCase();
+    } catch (error) {
+      console.error('Check super admin error:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if a user is super admin by email.
+   */
+  isSuperAdminByEmail(email: string): boolean {
+    const primaryAdminEmail = process.env.PRIMARY_ADMIN_EMAIL;
+    if (!primaryAdminEmail) {
+      return false;
+    }
+    return email.toLowerCase() === primaryAdminEmail.toLowerCase();
+  }
 }

@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { CosmosService } from '../services/cosmos.service.js';
 import { SignalRService } from '../services/signalr.service.js';
 import { AuthService } from '../services/auth.service.js';
-import { ChatMessage, SendMessageRequest } from '../models/message.js';
+import { ChatMessage, SendMessageRequest, EditMessageRequest, DeleteMessageRequest } from '../models/message.js';
 import { RegisterUserRequest, LoginRequest } from '../models/user.js';
 import { CreateRoomRequest, UpdateRoomRequest, Room, createRoomId } from '../models/room.js';
 
@@ -171,6 +171,80 @@ export async function registerApiRoutes(
       } catch (error) {
         fastify.log.error(error, 'Negotiate failed');
         return reply.status(500).send({ error: 'Failed to negotiate connection' });
+      }
+    }
+  );
+
+  // User connected event - called when user establishes SignalR connection
+  fastify.post(
+    '/api/chat/connected',
+    async (
+      request: FastifyRequest<{
+        Headers: { authorization?: string };
+        Body: { connectionId: string };
+      }>,
+      reply: FastifyReply
+    ) => {
+      try {
+        const authHeader = request.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+          return reply.status(401).send({ error: 'No token provided' });
+        }
+
+        const token = authHeader.substring(7);
+        const user = await authService.getUserByToken(token);
+        if (!user) {
+          return reply.status(401).send({ error: 'Invalid token' });
+        }
+
+        // Update user status to online
+        await cosmosService.updateUserStatus(user.id, 'online');
+        await cosmosService.updateUserLastSeen(user.id, new Date().toISOString());
+
+        // Broadcast user online status to all
+        await signalrService.broadcastUserOnline(user.id, user);
+
+        return reply.send({ success: true });
+      } catch (error) {
+        fastify.log.error(error, 'Failed to handle connected event');
+        return reply.status(500).send({ error: 'Failed to handle connected event' });
+      }
+    }
+  );
+
+  // User disconnected event - called when user closes SignalR connection
+  fastify.post(
+    '/api/chat/disconnected',
+    async (
+      request: FastifyRequest<{
+        Headers: { authorization?: string };
+        Body: { connectionId: string };
+      }>,
+      reply: FastifyReply
+    ) => {
+      try {
+        const authHeader = request.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+          return reply.status(401).send({ error: 'No token provided' });
+        }
+
+        const token = authHeader.substring(7);
+        const user = await authService.getUserByToken(token);
+        if (!user) {
+          return reply.status(401).send({ error: 'Invalid token' });
+        }
+
+        // Update user status to offline
+        await cosmosService.updateUserStatus(user.id, 'offline');
+        await cosmosService.updateUserLastSeen(user.id, new Date().toISOString());
+
+        // Broadcast user offline status to all
+        await signalrService.broadcastUserOffline(user.id);
+
+        return reply.send({ success: true });
+      } catch (error) {
+        fastify.log.error(error, 'Failed to handle disconnected event');
+        return reply.status(500).send({ error: 'Failed to handle disconnected event' });
       }
     }
   );
@@ -586,6 +660,127 @@ export async function registerApiRoutes(
       } catch (error) {
         fastify.log.error(error, 'Failed to delete room');
         return reply.status(500).send({ error: 'Failed to delete room' });
+      }
+    }
+  );
+
+  // ==================== Admin Message Management Endpoints ====================
+
+  // Edit a message (super admin only)
+  fastify.patch(
+    '/api/messages/:messageId',
+    async (
+      request: FastifyRequest<{
+        Headers: { authorization?: string };
+        Params: { messageId: string };
+        Body: { text: string };
+      }>,
+      reply: FastifyReply
+    ) => {
+      try {
+        const authHeader = request.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+          return reply.status(401).send({ error: 'No token provided' });
+        }
+
+        const token = authHeader.substring(7);
+        const user = await authService.getUserByToken(token);
+        if (!user) {
+          return reply.status(401).send({ error: 'Invalid token' });
+        }
+
+        // Check if user is super admin
+        const isSuperAdmin = await authService.isSuperAdmin(user.id);
+        if (!isSuperAdmin) {
+          return reply.status(403).send({ error: 'Only super admin can edit messages' });
+        }
+
+        const { messageId } = request.params;
+        const { text } = request.body;
+
+        if (!text || !text.trim()) {
+          return reply.status(400).send({ error: 'Message text is required' });
+        }
+
+        // Get the message
+        const message = await cosmosService.getMessageById(messageId);
+        if (!message) {
+          return reply.status(404).send({ error: 'Message not found' });
+        }
+
+        // Update the message
+        const updatedMessage: ChatMessage = {
+          ...message,
+          text: text.trim(),
+          editedAt: new Date().toISOString(),
+          isEdited: true,
+        };
+
+        await cosmosService.updateMessage(updatedMessage);
+
+        // Broadcast message edited event
+        await signalrService.broadcastMessageEdited(updatedMessage);
+
+        return reply.send(updatedMessage);
+      } catch (error) {
+        fastify.log.error(error, 'Failed to edit message');
+        return reply.status(500).send({ error: 'Failed to edit message' });
+      }
+    }
+  );
+
+  // Delete a message (super admin only)
+  fastify.delete(
+    '/api/messages/:messageId',
+    async (
+      request: FastifyRequest<{
+        Headers: { authorization?: string };
+        Params: { messageId: string };
+        Querystring: { roomid: string };
+      }>,
+      reply: FastifyReply
+    ) => {
+      try {
+        const authHeader = request.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+          return reply.status(401).send({ error: 'No token provided' });
+        }
+
+        const token = authHeader.substring(7);
+        const user = await authService.getUserByToken(token);
+        if (!user) {
+          return reply.status(401).send({ error: 'Invalid token' });
+        }
+
+        // Check if user is super admin
+        const isSuperAdmin = await authService.isSuperAdmin(user.id);
+        if (!isSuperAdmin) {
+          return reply.status(403).send({ error: 'Only super admin can delete messages' });
+        }
+
+        const { messageId } = request.params;
+        const { roomid } = request.query;
+
+        if (!roomid) {
+          return reply.status(400).send({ error: 'roomid query parameter is required' });
+        }
+
+        // Get the message to verify it exists
+        const message = await cosmosService.getMessageById(messageId);
+        if (!message) {
+          return reply.status(404).send({ error: 'Message not found' });
+        }
+
+        // Delete the message
+        await cosmosService.deleteMessage(messageId, roomid);
+
+        // Broadcast message deleted event
+        await signalrService.broadcastMessageDeleted(messageId, roomid);
+
+        return reply.status(204).send();
+      } catch (error) {
+        fastify.log.error(error, 'Failed to delete message');
+        return reply.status(500).send({ error: 'Failed to delete message' });
       }
     }
   );
