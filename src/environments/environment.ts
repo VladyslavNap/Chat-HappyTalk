@@ -8,4 +8,5 @@ export const environment = {
   apiBaseUrl: '',  // Empty for same-origin, set for external API
   signalrHubName: 'chat',
   defaultroomid: 'public',
+  adminEmail: 'naprikovsky@gmail.com',  // Super admin email
 };
