@@ -58,6 +58,13 @@ export class Chat implements OnInit, OnDestroy {
   // Confirmation dialog state
   showDeleteConfirmation = signal<boolean>(false);
   messageToDelete = signal<DisplayMessage | null>(null);
+  
+  // Computed message for confirmation dialog
+  deleteConfirmationMessage = computed(() => {
+    const msg = this.messageToDelete();
+    if (!msg) return '';
+    return `Delete this message?\n\n"${msg.text}"\n\nThis action cannot be undone.`;
+  });
 
   // Chat view state
   currentView = signal<ChatView>('room');

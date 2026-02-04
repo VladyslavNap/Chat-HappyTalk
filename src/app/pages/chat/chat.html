@@ -232,15 +232,17 @@
     </button>
   </form>
   </div>
+
+  <!-- Confirmation dialog for message deletion -->
+  @if (showDeleteConfirmation()) {
+    <app-confirmation-dialog
+      title="Delete Message"
+      [message]="deleteConfirmationMessage()"
+      confirmText="Delete"
+      cancelText="Cancel"
+      confirmButtonClass="danger"
+      (confirmed)="confirmDeleteMessage()"
+      (cancelled)="cancelDeleteMessage()"
+    ></app-confirmation-dialog>
+  }
 </div>
-@if (showDeleteConfirmation()) {
-  <app-confirmation-dialog
-    title="Delete Message"
-    [message]="'Delete this message?\n\n\"' + (messageToDelete()?.text || '') + '\"\n\nThis action cannot be undone.'"
-    confirmText="Delete"
-    cancelText="Cancel"
-    confirmButtonClass="danger"
-    (confirmed)="confirmDeleteMessage()"
-    (cancelled)="cancelDeleteMessage()"
-  ></app-confirmation-dialog>
-}
