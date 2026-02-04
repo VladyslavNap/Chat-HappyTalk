@@ -1,7 +1,12 @@
 <div class="contacts-container">
   <!-- Header -->
   <div class="contacts-header">
-    <h2>Contacts</h2>
+    <div class="header-left">
+      <a routerLink="/" class="btn-back" aria-label="Back to chat">
+        ← Back
+      </a>
+      <h2>Contacts</h2>
+    </div>
     <button 
       class="btn-add-contact"
       (click)="showAddDialog.set(true)"

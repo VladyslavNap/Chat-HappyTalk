@@ -82,38 +82,46 @@ export class PhotoUploadComponent {
     if (!file) {
       return;
     }
-    
+
     this.isUploading.set(true);
     this.errorMessage.set(null);
-    
-    let uploadObservable;
-    
+
     if (this.uploadType === 'avatar') {
-      uploadObservable = this.uploadService.uploadAvatar(file);
+      this.uploadService.uploadAvatar(file).subscribe({
+        next: (response: { avatarUrl: string }) => {
+          console.log('Upload successful:', response.avatarUrl);
+          this.uploadComplete.emit(response.avatarUrl);
+          this.reset();
+          this.isUploading.set(false);
+        },
+        error: (err: any) => {
+          console.error('Upload failed:', err);
+          const errorMsg = err.error?.error || 'Upload failed';
+          this.errorMessage.set(errorMsg);
+          this.uploadError.emit(errorMsg);
+          this.isUploading.set(false);
+        }
+      });
     } else if (this.uploadType === 'group' && this.groupId) {
-      uploadObservable = this.uploadService.uploadGroupPhoto(this.groupId, file);
+      this.uploadService.uploadGroupPhoto(this.groupId, file).subscribe({
+        next: (response: { photoUrl: string }) => {
+          console.log('Upload successful:', response.photoUrl);
+          this.uploadComplete.emit(response.photoUrl);
+          this.reset();
+          this.isUploading.set(false);
+        },
+        error: (err: any) => {
+          console.error('Upload failed:', err);
+          const errorMsg = err.error?.error || 'Upload failed';
+          this.errorMessage.set(errorMsg);
+          this.uploadError.emit(errorMsg);
+          this.isUploading.set(false);
+        }
+      });
     } else {
       this.errorMessage.set('Invalid upload configuration');
       this.isUploading.set(false);
-      return;
     }
-    
-    uploadObservable.subscribe({
-      next: (response) => {
-        const photoUrl = this.uploadType === 'avatar' ? response.avatarUrl : (response as any).photoUrl;
-        console.log('Upload successful:', photoUrl);
-        this.uploadComplete.emit(photoUrl);
-        this.reset();
-        this.isUploading.set(false);
-      },
-      error: (err) => {
-        console.error('Upload failed:', err);
-        const errorMsg = err.error?.error || 'Upload failed';
-        this.errorMessage.set(errorMsg);
-        this.uploadError.emit(errorMsg);
-        this.isUploading.set(false);
-      }
-    });
   }
   
   deletePhoto(): void {

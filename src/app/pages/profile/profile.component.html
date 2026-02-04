@@ -1,0 +1,138 @@
+<div class="profile-container">
+  <!-- Header -->
+  <div class="profile-header">
+    <div class="header-left">
+      <a routerLink="/" class="btn-back" aria-label="Back to chat">
+        ← Back
+      </a>
+      <h2>My Profile</h2>
+    </div>
+  </div>
+
+  <!-- Success/Error Messages -->
+  @if (successMessage()) {
+    <div class="alert alert-success">
+      ✓ {{ successMessage() }}
+    </div>
+  }
+  @if (errorMessage()) {
+    <div class="alert alert-error">
+      ✗ {{ errorMessage() }}
+    </div>
+  }
+
+  <!-- Profile Content -->
+  <div class="profile-content">
+    <!-- Avatar Section -->
+    <section class="profile-section">
+      <h3>Profile Picture</h3>
+      <div class="avatar-section">
+        @if (currentUser()?.avatarUrl) {
+          <div class="current-avatar-large">
+            <img [src]="currentUser()!.avatarUrl" [alt]="currentUser()!.displayName" />
+          </div>
+        } @else {
+          <div class="avatar-placeholder-large">
+            {{ getInitials() }}
+          </div>
+        }
+      </div>
+      
+      <div class="upload-section">
+        <app-photo-upload
+          uploadType="avatar"
+          [currentPhotoUrl]="currentUser()?.avatarUrl"
+          (uploadComplete)="onAvatarUploaded($event)"
+          (uploadError)="onUploadError($event)">
+        </app-photo-upload>
+      </div>
+    </section>
+
+    <!-- User Info Section -->
+    <section class="profile-section">
+      <h3>User Information</h3>
+      
+      <!-- Username -->
+      <div class="info-row">
+        <label>Username</label>
+        <div class="info-value">
+          <strong>@{{ currentUser()?.username || 'unknown' }}</strong>
+          <span class="info-note">(Cannot be changed)</span>
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="info-row">
+        <label>Email</label>
+        <div class="info-value">
+          <strong>{{ currentUser()?.email || 'Not set' }}</strong>
+          <span class="info-note">(Cannot be changed)</span>
+        </div>
+      </div>
+
+      <!-- Display Name -->
+      <div class="info-row">
+        <label>Display Name</label>
+        <div class="info-value">
+          @if (isEditingName()) {
+            <div class="edit-name-form">
+              <input 
+                type="text"
+                [value]="newDisplayName()"
+                (input)="newDisplayName.set($any($event.target).value)"
+                (keyup.enter)="saveDisplayName()"
+                (keyup.escape)="cancelEditName()"
+                placeholder="Enter display name"
+                class="name-input"
+                maxlength="50"
+                autofocus />
+              <button 
+                (click)="saveDisplayName()"
+                class="btn-save"
+                [disabled]="isSaving()">
+                @if (isSaving()) {
+                  Saving...
+                } @else {
+                  ✓ Save
+                }
+              </button>
+              <button 
+                (click)="cancelEditName()"
+                class="btn-cancel"
+                [disabled]="isSaving()">
+                ✗ Cancel
+              </button>
+            </div>
+          } @else {
+            <div class="display-name-row">
+              <strong>{{ currentUser()?.displayName || 'Not set' }}</strong>
+              <button 
+                (click)="startEditName()"
+                class="btn-edit-inline">
+                ✏️ Edit
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- User ID -->
+      <div class="info-row">
+        <label>User ID</label>
+        <div class="info-value">
+          <code>{{ currentUser()?.id || 'unknown' }}</code>
+        </div>
+      </div>
+    </section>
+
+    <!-- Account Actions -->
+    <section class="profile-section">
+      <h3>Account Actions</h3>
+      <div class="action-buttons">
+        <button class="btn-secondary" routerLink="/">
+          Back to Chat
+        </button>
+      </div>
+    </section>
+  </div>
+</div>

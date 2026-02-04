@@ -1,33 +1,41 @@
 import { Component, OnInit, OnDestroy, signal, computed, inject, effect, ElementRef, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { SignalRService, ChatMessage } from '../../services/signalr.service';
 import { AuthService } from '../../services/auth.service';
 import { UserList } from '../../components/user-list/user-list';
 import { RoomList } from '../../components/room-list/room-list';
+import { CreateGroupComponent } from '../../components/create-group/create-group.component';
 import { UserProfile } from '../../models/auth.model';
 import { createDMRoomId } from '../../models/dm.model';
 import { Room } from '../../models/room.model';
 
 interface DisplayMessage {
+  id: string;
   text: string;
   sender: 'user' | 'other';
   timestamp: Date;
   senderName?: string;
+  isEdited?: boolean;
+  editedAt?: string;
 }
 
 type ChatView = 'room' | 'dm';
 
 @Component({
   selector: 'app-chat',
-  imports: [CommonModule, FormsModule, UserList, RoomList],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, UserList, RoomList, CreateGroupComponent],
   templateUrl: './chat.html',
   styleUrl: './chat.scss',
 })
 export class Chat implements OnInit, OnDestroy {
   private signalrService = inject(SignalRService);
   private authService = inject(AuthService);
+  private http = inject(HttpClient);
   private messagesContainer = viewChild<ElementRef<HTMLDivElement>>('messagesContainer');
+  private createGroupComponent = viewChild<CreateGroupComponent>('createGroup');
 
   // User identity from auth service
   currentUser = this.authService.currentUser;
@@ -37,6 +45,12 @@ export class Chat implements OnInit, OnDestroy {
   isConnecting = signal<boolean>(false);
   showSidebar = signal<boolean>(this.getInitialSidebarState());
   private shouldAutoScroll = true;
+
+  // Admin message editing state
+  editingMessageId = signal<string | null>(null);
+  editingMessageText = signal('');
+  isSavingEdit = signal(false);
+  isDeletingMessage = signal(false);
 
   // Chat view state
   currentView = signal<ChatView>('room');
@@ -212,6 +226,25 @@ export class Chat implements OnInit, OnDestroy {
   }
 
   /**
+   * Close sidebar on mobile after navigation.
+   */
+  closeSidebarOnMobile(): void {
+    if (this.isMobile()) {
+      this.showSidebar.set(false);
+    }
+  }
+
+  /**
+   * Open create group dialog.
+   */
+  openCreateGroupDialog(): void {
+    const component = this.createGroupComponent();
+    if (component) {
+      component.open();
+    }
+  }
+
+  /**
    * Check if device is mobile.
    */
   isMobile(): boolean {
@@ -261,10 +294,150 @@ export class Chat implements OnInit, OnDestroy {
     const user = this.currentUser();
     const isCurrentUser = msg.senderId === user?.id;
     return {
+      id: msg.id,
       text: msg.text,
       sender: isCurrentUser ? 'user' : 'other',
       timestamp: new Date(msg.createdAt),
       senderName: isCurrentUser ? undefined : msg.senderName,
+      isEdited: msg.isEdited,
+      editedAt: msg.editedAt,
     };
+  }
+
+  // ==================== Admin Message Controls ====================
+
+  /**
+   * Check if current user is super admin.
+   */
+  get isSuperAdmin(): boolean {
+    return this.authService.isSuperAdmin();
+  }
+
+  /**
+   * Start editing a message (admin only).
+   */
+  startEditMessage(message: DisplayMessage): void {
+    if (!this.isSuperAdmin) {
+      return;
+    }
+
+    // Get the original ChatMessage to access roomid
+    const chatMessage = this.signalrService.messages().find(m => m.id === message.id);
+    if (!chatMessage) {
+      return;
+    }
+
+    this.editingMessageId.set(message.id);
+    this.editingMessageText.set(message.text);
+  }
+
+  /**
+   * Save edited message (admin only).
+   */
+  async saveEditMessage(message: DisplayMessage): Promise<void> {
+    if (!this.isSuperAdmin || !this.editingMessageId()) {
+      return;
+    }
+
+    const newText = this.editingMessageText().trim();
+    if (!newText) {
+      alert('Message text cannot be empty');
+      return;
+    }
+
+    // Get the original ChatMessage to access roomid
+    const chatMessage = this.signalrService.messages().find(m => m.id === message.id);
+    if (!chatMessage) {
+      return;
+    }
+
+    this.isSavingEdit.set(true);
+
+    try {
+      const response = await this.http.patch<ChatMessage>(
+        `/api/messages/${message.id}`,
+        {
+          text: newText,
+          roomid: chatMessage.roomid
+        }
+      ).toPromise();
+
+      if (response) {
+        // Update message in local state
+        this.signalrService.handleMessageEdited(response);
+        this.cancelEditMessage();
+        console.log('Message edited successfully');
+      }
+    } catch (error) {
+      console.error('Failed to edit message:', error);
+      alert('Failed to edit message. Please try again.');
+    } finally {
+      this.isSavingEdit.set(false);
+    }
+  }
+
+  /**
+   * Cancel editing message.
+   */
+  cancelEditMessage(): void {
+    this.editingMessageId.set(null);
+    this.editingMessageText.set('');
+  }
+
+  /**
+   * Delete a message (admin only).
+   */
+  async deleteMessage(message: DisplayMessage): Promise<void> {
+    if (!this.isSuperAdmin) {
+      return;
+    }
+
+    // Get the original ChatMessage to access roomid
+    const chatMessage = this.signalrService.messages().find(m => m.id === message.id);
+    if (!chatMessage) {
+      return;
+    }
+
+    const confirmed = confirm(`Delete this message?\n\n"${message.text}"\n\nThis action cannot be undone.`);
+    if (!confirmed) {
+      return;
+    }
+
+    this.isDeletingMessage.set(true);
+
+    try {
+      await this.http.delete(
+        `/api/messages/${message.id}?roomid=${encodeURIComponent(chatMessage.roomid)}`
+      ).toPromise();
+
+      // Remove message from local state
+      this.signalrService.handleMessageDeleted(message.id);
+      console.log('Message deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete message:', error);
+      alert('Failed to delete message. Please try again.');
+    } finally {
+      this.isDeletingMessage.set(false);
+    }
+  }
+
+  /**
+   * Check if a specific message is being edited.
+   */
+  isEditingMessage(messageId: string): boolean {
+    return this.editingMessageId() === messageId;
+  }
+
+  /**
+   * Handle keyboard events for message editing.
+   */
+  onEditKeydown(event: KeyboardEvent, message: DisplayMessage): void {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.saveEditMessage(message);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.cancelEditMessage();
+    }
   }
 }

@@ -15,12 +15,13 @@ import { Contact } from '../../models/contact.model';
 })
 export class CreateGroupComponent implements OnInit {
   showDialog = signal(false);
-  
+
   groupName = signal('');
   groupDescription = signal('');
   selectedMemberIds = signal<Set<string>>(new Set());
-  
-  contacts = this.contactsService.contactsSignal;
+
+  // Use computed to avoid initialization order issues
+  contacts = computed(() => this.contactsService.contactsSignal());
   isSubmitting = signal(false);
   errorMessage = signal<string | null>(null);
   

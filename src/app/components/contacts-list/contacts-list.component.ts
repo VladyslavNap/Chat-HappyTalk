@@ -1,19 +1,21 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ContactsService } from '../../services/contacts.service';
 import { Contact, UserSearchResult } from '../../models/contact.model';
 
 @Component({
   selector: 'app-contacts-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './contacts-list.component.html',
   styleUrl: './contacts-list.component.scss'
 })
 export class ContactsListComponent implements OnInit {
-  contacts = this.contactsService.contactsSignal;
-  onlineContacts = this.contactsService.onlineContactsSignal;
+  // Use computed to avoid initialization order issues
+  contacts = computed(() => this.contactsService.contactsSignal());
+  onlineContacts = computed(() => this.contactsService.onlineContactsSignal());
   
   searchQuery = signal('');
   searchResults = signal<UserSearchResult[]>([]);
