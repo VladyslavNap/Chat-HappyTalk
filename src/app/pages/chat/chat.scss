@@ -188,11 +188,11 @@
     min-height: 0;
     border-bottom: 1px solid #e0e0e0;
 
-    // Enable scrolling on small phones
-    @media (max-width: 480px) {
+    // Enable scrolling on mobile devices
+    @media (max-width: 768px) {
       overflow-y: auto;
       overflow-x: hidden;
-      max-height: 30%;
+      max-height: 25%;
 
       // Custom scrollbar styling for mobile
       -webkit-overflow-scrolling: touch;
@@ -225,8 +225,8 @@
     flex-direction: column;
     min-height: 0;
 
-    // Enable scrolling on small phones
-    @media (max-width: 480px) {
+    // Enable scrolling on mobile devices
+    @media (max-width: 768px) {
       overflow-y: auto;
       overflow-x: hidden;
 
@@ -258,6 +258,14 @@
     padding: 12px;
     background-color: white;
     border-top: 1px solid #e0e0e0;
+    flex-shrink: 0; // Ensure footer doesn't shrink on mobile
+
+    // Ensure footer is always visible on mobile
+    @media (max-width: 768px) {
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
+    }
 
     .current-user-info {
       display: flex;
@@ -346,6 +354,12 @@
       &:active {
         transform: translateY(0);
       }
+
+      // Ensure button is visible and touch-friendly on mobile
+      @media (max-width: 768px) {
+        min-height: 44px; // Touch-friendly height
+        font-size: 16px; // Prevent zoom on iOS
+      }
     }
 
     .logout-button {
@@ -361,6 +375,12 @@
 
       &:hover {
         background-color: #c82333;
+      }
+
+      // Ensure button is visible and touch-friendly on mobile
+      @media (max-width: 768px) {
+        min-height: 44px; // Touch-friendly height
+        font-size: 16px; // Prevent zoom on iOS
       }
     }
   }
