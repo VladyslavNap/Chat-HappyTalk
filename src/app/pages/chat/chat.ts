@@ -58,9 +58,11 @@ export class Chat implements OnInit, OnDestroy {
   // Confirmation dialog state
   showDeleteConfirmation = signal<boolean>(false);
   messageToDelete = signal<DisplayMessage | null>(null);
-  chatMessageToDelete = signal<ChatMessage | null>(null); // Store the original ChatMessage to avoid repeated searches
+  // Store the original ChatMessage to avoid repeated searches
+  chatMessageToDelete = signal<ChatMessage | null>(null);
   
   // Computed message for confirmation dialog
+  // Note: Newlines are preserved in the confirmation dialog component's white-space CSS
   deleteConfirmationMessage = computed(() => {
     const msg = this.messageToDelete();
     if (!msg) return '';
