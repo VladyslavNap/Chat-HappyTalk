@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { PhotoUploadComponent } from '../../components/photo-upload/photo-upload.component';
-import { UserProfile } from '../../models/auth.model';
 
 @Component({
   selector: 'app-profile',

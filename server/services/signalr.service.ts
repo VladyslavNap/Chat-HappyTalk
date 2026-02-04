@@ -364,7 +364,6 @@ export class SignalRService {
    * Broadcast group created event to all members.
    */
   async broadcastGroupCreated(group: Group): Promise<void> {
-    const url = `${this.endpoint}/api/v1/hubs/${this.hubName}`;
     const token = this.generateServerToken();
 
     try {

@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { CosmosService } from '../services/cosmos.service.js';
 import { SignalRService } from '../services/signalr.service.js';
 import { AuthService } from '../services/auth.service.js';
-import { ChatMessage, SendMessageRequest, EditMessageRequest, DeleteMessageRequest } from '../models/message.js';
+import { ChatMessage, SendMessageRequest } from '../models/message.js';
 import { RegisterUserRequest, LoginRequest } from '../models/user.js';
 import { CreateRoomRequest, UpdateRoomRequest, Room, createRoomId } from '../models/room.js';
 

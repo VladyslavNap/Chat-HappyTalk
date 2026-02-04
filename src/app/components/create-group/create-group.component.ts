@@ -3,8 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GroupsService } from '../../services/groups.service';
 import { ContactsService } from '../../services/contacts.service';
-import { Group } from '../../models/group.model';
-import { Contact } from '../../models/contact.model';
 
 @Component({
   selector: 'app-create-group',
