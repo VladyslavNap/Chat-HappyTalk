@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { signal } from '@angular/core';
+import { vi } from 'vitest';
 
 import { Chat } from './chat';
 import { SignalRService } from '../../services/signalr.service';
@@ -18,24 +19,25 @@ describe('Chat', () => {
     messages: signal([]),
     connected: signal(false),
     connectionError: signal<string | null>(null),
-    connect: jasmine.createSpy('connect').and.returnValue(Promise.resolve()),
-    disconnect: jasmine.createSpy('disconnect').and.returnValue(Promise.resolve()),
-    sendMessage: jasmine.createSpy('sendMessage'),
-    joinRoom: jasmine.createSpy('joinRoom'),
-    leaveRoom: jasmine.createSpy('leaveRoom')
+    connect: vi.fn().mockResolvedValue(undefined),
+    disconnect: vi.fn().mockResolvedValue(undefined),
+    sendMessage: vi.fn(),
+    joinRoom: vi.fn(),
+    leaveRoom: vi.fn(),
+    loadHistory: vi.fn().mockResolvedValue([])
   };
 
   const mockAuthService = {
     currentUser: signal(null),
     isAuthenticated: signal(false),
-    login: jasmine.createSpy('login'),
-    logout: jasmine.createSpy('logout')
+    login: vi.fn(),
+    logout: vi.fn()
   };
 
   const mockNotificationService = {
-    showSuccess: jasmine.createSpy('showSuccess'),
-    showError: jasmine.createSpy('showError'),
-    showInfo: jasmine.createSpy('showInfo')
+    showSuccess: vi.fn(),
+    showError: vi.fn(),
+    showInfo: vi.fn()
   };
 
 

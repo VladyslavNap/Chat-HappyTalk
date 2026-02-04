@@ -12,7 +12,8 @@
     "build:server": "tsc -p server/tsconfig.json",
     "build:all": "npm run build && npm run build:server",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test",
+    "test": "ng test --watch",
+    "test:ci": "node scripts/test-ci.js",
     "dev": "npm run build:all && npm run start:server"
   },
   "prettier": {

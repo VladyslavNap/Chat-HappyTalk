@@ -77,7 +77,7 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "globals": true
+            "watch": false
           }
         }
       }

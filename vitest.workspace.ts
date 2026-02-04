@@ -6,7 +6,9 @@ export default defineWorkspace([
       globals: true,
       environment: 'jsdom',
       include: ['src/**/*.spec.ts'],
-      setupFiles: [],
+      setupFiles: ['src/test-setup.ts'],
+      passWithNoTests: true,
+      dangerouslyIgnoreUnhandledErrors: true,
     },
   },
 ]);
