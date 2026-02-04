@@ -345,7 +345,6 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      font-size: 15px; // Ensure readable text on mobile
 
       &:hover {
         transform: translateY(-2px);
@@ -373,7 +372,6 @@
       font-weight: 600;
       cursor: pointer;
       transition: background-color 0.2s;
-      font-size: 15px; // Ensure readable text on mobile
 
       &:hover {
         background-color: #c82333;
