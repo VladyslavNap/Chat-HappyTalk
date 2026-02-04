@@ -13,6 +13,22 @@
       </button>
     </div>
 
+    <!-- Navigation Links -->
+    <nav class="sidebar-navigation">
+      <a routerLink="/contacts" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()">
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">Contacts</span>
+      </a>
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link" (click)="closeSidebarOnMobile()">
+        <span class="nav-icon">💬</span>
+        <span class="nav-label">Chat</span>
+      </a>
+      <a routerLink="/profile" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">Profile</span>
+      </a>
+    </nav>
+
     <div class="room-list-section">
       <app-room-list (roomSelected)="onRoomSelected($event)"></app-room-list>
     </div>
@@ -22,7 +38,7 @@
     </div>
 
     <div class="sidebar-footer">
-      <div class="current-user-info">
+      <a routerLink="/profile" class="current-user-info clickable" (click)="closeSidebarOnMobile()">
         <div class="user-avatar-small">
           {{ (currentUser()?.displayName || currentUser()?.username || 'U').substring(0, 2).toUpperCase() }}
         </div>
@@ -30,12 +46,22 @@
           <div class="user-name-small">{{ currentUser()?.displayName || 'User' }}</div>
           <div class="user-username-small">@{{ currentUser()?.username || 'unknown' }}</div>
         </div>
-      </div>
+        <span class="profile-arrow">›</span>
+      </a>
+      <button 
+        class="create-group-button" 
+        (click)="openCreateGroupDialog()" 
+        title="Create a new group">
+        ➕ Create Group
+      </button>
       <button class="logout-button" (click)="onLogout()" title="Logout">
         Logout
       </button>
     </div>
   </aside>
+
+  <!-- Create Group Component (Hidden until opened) -->
+  <app-create-group #createGroup></app-create-group>
 
   <!-- Main chat area -->
   <div class="chat-container" role="main">
@@ -88,18 +114,86 @@
         <p>No messages yet. Be the first to say hello!</p>
       </div>
     }
-    @for (message of messages(); track $index) {
+    @for (message of messages(); track message.id) {
       <div 
         class="message-wrapper"
         [class.user-message]="message.sender === 'user'"
         [class.other-message]="message.sender === 'other'">
-        <div class="message">
+        <div class="message" [class.editing]="isEditingMessage(message.id)">
           @if (message.senderName) {
             <div class="message-sender">{{ message.senderName }}</div>
           }
-          <div class="message-content">
-            {{ message.text }}
-          </div>
+
+          <!-- Message Content or Edit Form -->
+          @if (isEditingMessage(message.id)) {
+            <div class="message-edit-form">
+              <textarea
+                [value]="editingMessageText()"
+                (input)="editingMessageText.set($any($event.target).value)"
+                (keydown)="onEditKeydown($event, message)"
+                class="message-edit-input"
+                rows="3"
+                placeholder="Edit message..."
+                autofocus></textarea>
+              <div class="message-edit-actions">
+                <button 
+                  type="button"
+                  (click)="saveEditMessage(message)"
+                  class="btn-save-edit"
+                  [disabled]="isSavingEdit()">
+                  @if (isSavingEdit()) {
+                    Saving...
+                  } @else {
+                    ✓ Save
+                  }
+                </button>
+                <button 
+                  type="button"
+                  (click)="cancelEditMessage()"
+                  class="btn-cancel-edit"
+                  [disabled]="isSavingEdit()">
+                  ✗ Cancel
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="message-content-wrapper">
+              <div class="message-content">
+                {{ message.text }}
+              </div>
+
+              <!-- Edited Badge -->
+              @if (message.isEdited) {
+                <span class="edited-badge" title="Edited at {{ message.editedAt | date: 'short' }}">
+                  (Edited)
+                </span>
+              }
+
+              <!-- Admin Controls -->
+              @if (isSuperAdmin) {
+                <div class="admin-controls">
+                  <button 
+                    type="button"
+                    (click)="startEditMessage(message)"
+                    class="btn-admin-action btn-edit"
+                    title="Edit message"
+                    aria-label="Edit message">
+                    ✏️
+                  </button>
+                  <button 
+                    type="button"
+                    (click)="deleteMessage(message)"
+                    class="btn-admin-action btn-delete"
+                    title="Delete message"
+                    aria-label="Delete message"
+                    [disabled]="isDeletingMessage()">
+                    🗑️
+                  </button>
+                </div>
+              }
+            </div>
+          }
+
           <div class="message-time">
             {{ message.timestamp | date: 'short' }}
           </div>
@@ -138,4 +232,17 @@
     </button>
   </form>
   </div>
+
+  <!-- Confirmation dialog for message deletion -->
+  @if (showDeleteConfirmation()) {
+    <app-confirmation-dialog
+      title="Delete Message"
+      [message]="deleteConfirmationMessage()"
+      confirmText="Delete"
+      cancelText="Cancel"
+      confirmButtonClass="danger"
+      (confirmed)="confirmDeleteMessage()"
+      (cancelled)="cancelDeleteMessage()"
+    ></app-confirmation-dialog>
+  }
 </div>

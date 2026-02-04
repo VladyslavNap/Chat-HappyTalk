@@ -1,4 +1,6 @@
 import { ChatMessage } from '../models/message.js';
+import { Contact } from '../models/contact.js';
+import { Group } from '../models/group.js';
 import { createHmac } from 'crypto';
 
 /**
@@ -233,6 +235,369 @@ export class SignalRService {
       }
     } catch (error) {
       console.error('Error removing from group:', error);
+    }
+  }
+
+  // ==================== User Presence Tracking ====================
+
+  /**
+   * Broadcast user online status change.
+   */
+  async broadcastUserOnline(userId: string, userProfile: any): Promise<void> {
+    const url = `${this.endpoint}/api/v1/hubs/${this.hubName}`;
+    const token = this.generateServerToken();
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          target: 'UserOnline',
+          arguments: [{ userId, userProfile }]
+        })
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to broadcast user online: ${response.status} ${response.statusText}`);
+      } else {
+        console.log(`User ${userId} online status broadcast`);
+      }
+    } catch (error) {
+      console.error('Error broadcasting user online:', error);
+    }
+  }
+
+  /**
+   * Broadcast user offline status change.
+   */
+  async broadcastUserOffline(userId: string): Promise<void> {
+    const url = `${this.endpoint}/api/v1/hubs/${this.hubName}`;
+    const token = this.generateServerToken();
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          target: 'UserOffline',
+          arguments: [{ userId }]
+        })
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to broadcast user offline: ${response.status} ${response.statusText}`);
+      } else {
+        console.log(`User ${userId} offline status broadcast`);
+      }
+    } catch (error) {
+      console.error('Error broadcasting user offline:', error);
+    }
+  }
+
+  // ==================== Contact Management Events ====================
+
+  /**
+   * Broadcast contact added event to user.
+   */
+  async broadcastContactAdded(userId: string, contact: Contact): Promise<void> {
+    const url = `${this.endpoint}/api/v1/hubs/${this.hubName}/users/${userId}`;
+    const token = this.generateServerToken();
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          target: 'ContactAdded',
+          arguments: [contact]
+        })
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to broadcast contact added: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error broadcasting contact added:', error);
+    }
+  }
+
+  /**
+   * Broadcast contact removed event to user.
+   */
+  async broadcastContactRemoved(userId: string, contactId: string): Promise<void> {
+    const url = `${this.endpoint}/api/v1/hubs/${this.hubName}/users/${userId}`;
+    const token = this.generateServerToken();
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          target: 'ContactRemoved',
+          arguments: [{ contactId }]
+        })
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to broadcast contact removed: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error broadcasting contact removed:', error);
+    }
+  }
+
+  // ==================== Group Management Events ====================
+
+  /**
+   * Broadcast group created event to all members.
+   */
+  async broadcastGroupCreated(group: Group): Promise<void> {
+    const token = this.generateServerToken();
+
+    try {
+      // Send to each member
+      for (const memberId of group.members) {
+        const memberUrl = `${this.endpoint}/api/v1/hubs/${this.hubName}/users/${memberId}`;
+        const response = await fetch(memberUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            target: 'GroupCreated',
+            arguments: [group]
+          })
+        });
+
+        if (!response.ok) {
+          console.error(`Failed to broadcast group created to ${memberId}: ${response.status}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error broadcasting group created:', error);
+    }
+  }
+
+  /**
+   * Broadcast group updated event to all members.
+   */
+  async broadcastGroupUpdated(group: Group): Promise<void> {
+    const token = this.generateServerToken();
+
+    try {
+      for (const memberId of group.members) {
+        const memberUrl = `${this.endpoint}/api/v1/hubs/${this.hubName}/users/${memberId}`;
+        const response = await fetch(memberUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            target: 'GroupUpdated',
+            arguments: [group]
+          })
+        });
+
+        if (!response.ok) {
+          console.error(`Failed to broadcast group updated to ${memberId}: ${response.status}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error broadcasting group updated:', error);
+    }
+  }
+
+  /**
+   * Broadcast group members added event.
+   */
+  async broadcastGroupMembersAdded(group: Group, newMemberIds: string[]): Promise<void> {
+    const token = this.generateServerToken();
+
+    try {
+      for (const memberId of group.members) {
+        const memberUrl = `${this.endpoint}/api/v1/hubs/${this.hubName}/users/${memberId}`;
+        const response = await fetch(memberUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            target: 'GroupMembersAdded',
+            arguments: [{ groupId: group.id, newMemberIds }]
+          })
+        });
+
+        if (!response.ok) {
+          console.error(`Failed to broadcast members added to ${memberId}: ${response.status}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error broadcasting group members added:', error);
+    }
+  }
+
+  /**
+   * Broadcast group member removed event.
+   */
+  async broadcastGroupMemberRemoved(group: Group, removedMemberId: string): Promise<void> {
+    const token = this.generateServerToken();
+
+    try {
+      // Notify all current members plus the removed member
+      const notifyUsers = [...group.members, removedMemberId];
+      for (const memberId of notifyUsers) {
+        const memberUrl = `${this.endpoint}/api/v1/hubs/${this.hubName}/users/${memberId}`;
+        const response = await fetch(memberUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            target: 'GroupMemberRemoved',
+            arguments: [{ groupId: group.id, memberId: removedMemberId }]
+          })
+        });
+
+        if (!response.ok) {
+          console.error(`Failed to broadcast member removed to ${memberId}: ${response.status}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error broadcasting group member removed:', error);
+    }
+  }
+
+  /**
+   * Broadcast group deleted event to all members.
+   */
+  async broadcastGroupDeleted(groupId: string, memberIds: string[]): Promise<void> {
+    const token = this.generateServerToken();
+
+    try {
+      for (const memberId of memberIds) {
+        const memberUrl = `${this.endpoint}/api/v1/hubs/${this.hubName}/users/${memberId}`;
+        const response = await fetch(memberUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            target: 'GroupDeleted',
+            arguments: [{ groupId }]
+          })
+        });
+
+        if (!response.ok) {
+          console.error(`Failed to broadcast group deleted to ${memberId}: ${response.status}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error broadcasting group deleted:', error);
+    }
+  }
+
+  // ==================== Avatar/Photo Events ====================
+
+  /**
+   * Broadcast avatar updated event.
+   */
+  async broadcastAvatarUpdated(userId: string, avatarUrl?: string): Promise<void> {
+    const url = `${this.endpoint}/api/v1/hubs/${this.hubName}`;
+    const token = this.generateServerToken();
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          target: 'AvatarUpdated',
+          arguments: [{ userId, avatarUrl }]
+        })
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to broadcast avatar updated: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error broadcasting avatar updated:', error);
+    }
+  }
+
+  // ==================== Message Admin Events ====================
+
+  /**
+   * Broadcast message edited event to room.
+   */
+  async broadcastMessageEdited(message: ChatMessage): Promise<void> {
+    const url = `${this.endpoint}/api/v1/hubs/${this.hubName}/groups/${message.roomid}`;
+    const token = this.generateServerToken();
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          target: 'MessageEdited',
+          arguments: [message]
+        })
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to broadcast message edited: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error broadcasting message edited:', error);
+    }
+  }
+
+  /**
+   * Broadcast message deleted event to room.
+   */
+  async broadcastMessageDeleted(messageId: string, roomid: string): Promise<void> {
+    const url = `${this.endpoint}/api/v1/hubs/${this.hubName}/groups/${roomid}`;
+    const token = this.generateServerToken();
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          target: 'MessageDeleted',
+          arguments: [{ messageId, roomid }]
+        })
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to broadcast message deleted: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error broadcasting message deleted:', error);
     }
   }
 }

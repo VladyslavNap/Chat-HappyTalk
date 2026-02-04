@@ -200,9 +200,37 @@ export class AuthService {
   }
 
   /**
+   * Update current user profile in local state.
+   * This is used after profile updates (e.g., avatar upload).
+   */
+  updateCurrentUser(user: UserProfile): void {
+    this.currentUser.set(user);
+    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+
+    this.authStateSubject.next({
+      isAuthenticated: true,
+      user,
+      token: this.getToken(),
+    });
+  }
+
+  /**
    * Check if user is authenticated.
    */
   isUserAuthenticated(): boolean {
     return this.isAuthenticated();
+  }
+
+  /**
+   * Check if current user is a super admin.
+   * Super admin email is defined in environment variables.
+   */
+  isSuperAdmin(): boolean {
+    const user = this.currentUser();
+    if (!user || !user.email) {
+      return false;
+    }
+    // Super admin email - should match PRIMARY_ADMIN_EMAIL in backend
+    return user.email.toLowerCase() === environment.adminEmail.toLowerCase();
   }
 }

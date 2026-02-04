@@ -1,0 +1,187 @@
+<div class="contacts-container">
+  <!-- Header -->
+  <div class="contacts-header">
+    <div class="header-left">
+      <a routerLink="/" class="btn-back" aria-label="Back to chat">
+        ← Back
+      </a>
+      <h2>Contacts</h2>
+    </div>
+    <button 
+      class="btn-add-contact"
+      (click)="showAddDialog.set(true)"
+      aria-label="Add new contact">
+      ➕ Add Contact
+    </button>
+  </div>
+  
+  <!-- Search Bar -->
+  <div class="search-bar">
+    <input 
+      type="text"
+      [value]="searchQuery()"
+      (input)="searchQuery.set($any($event.target).value)"
+      placeholder="Search contacts..."
+      aria-label="Search contacts"
+      class="search-input" />
+  </div>
+  
+  <!-- Online Users Count -->
+  <div class="online-count">
+    {{ onlineContacts().length }} online
+  </div>
+  
+  <!-- Contacts List -->
+  <div class="contacts-list" role="list">
+    @if (filteredContacts().length === 0) {
+      <div class="empty-state">
+        <p>No contacts found</p>
+        <button (click)="showAddDialog.set(true)" class="btn-primary">
+          Add your first contact
+        </button>
+      </div>
+    }
+    
+    @for (contact of filteredContacts(); track contact.id) {
+      <div class="contact-item" role="listitem">
+        <!-- Avatar -->
+        <div class="contact-avatar">
+          @if (contact.contactAvatarUrl) {
+            <img [src]="contact.contactAvatarUrl" [alt]="contact.contactDisplayName" />
+          } @else {
+            <div class="avatar-placeholder">
+              {{ (contact.nickname || contact.contactDisplayName).charAt(0).toUpperCase() }}
+            </div>
+          }
+          <span class="status-badge" [attr.data-status]="contact.contactStatus">
+            {{ getStatusIcon(contact.contactStatus) }}
+          </span>
+        </div>
+        
+        <!-- Contact Info -->
+        <div class="contact-info">
+          <div class="contact-name-row">
+            @if (editingNickname() === contact.id) {
+              <input 
+                type="text"
+                [value]="nicknameInput()"
+                (input)="nicknameInput.set($any($event.target).value)"
+                (keyup.enter)="saveNickname(contact)"
+                (keyup.escape)="cancelEditNickname()"
+                placeholder="Enter nickname"
+                class="nickname-input"
+                autofocus />
+              <button (click)="saveNickname(contact)" class="btn-icon" aria-label="Save">✓</button>
+              <button (click)="cancelEditNickname()" class="btn-icon" aria-label="Cancel">✗</button>
+            } @else {
+              <span class="contact-name">
+                {{ contact.nickname || contact.contactDisplayName }}
+                @if (contact.isFavorite) {
+                  <span class="favorite-star">⭐</span>
+                }
+              </span>
+            }
+          </div>
+          
+          @if (contact.nickname) {
+            <span class="contact-username">{{ contact.contactDisplayName }}</span>
+          }
+          
+          <span class="contact-status">{{ getLastSeenText(contact) }}</span>
+        </div>
+        
+        <!-- Actions -->
+        <div class="contact-actions">
+          <button 
+            (click)="toggleFavorite(contact)"
+            class="btn-icon"
+            [attr.aria-label]="contact.isFavorite ? 'Remove from favorites' : 'Add to favorites'">
+            {{ contact.isFavorite ? '⭐' : '☆' }}
+          </button>
+          
+          <button 
+            (click)="startEditNickname(contact)"
+            class="btn-icon"
+            aria-label="Edit nickname">
+            ✏️
+          </button>
+          
+          <button 
+            (click)="removeContact(contact)"
+            class="btn-icon btn-danger"
+            aria-label="Remove contact">
+            🗑️
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+  
+  <!-- Add Contact Dialog -->
+  @if (showAddDialog()) {
+    <div class="modal-overlay" (click)="showAddDialog.set(false)">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Add Contact</h3>
+          <button 
+            (click)="showAddDialog.set(false)"
+            class="btn-close"
+            aria-label="Close">
+            ✕
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="search-bar">
+            <input 
+              type="text"
+              (input)="searchUsers($any($event.target).value)"
+              placeholder="Search users by name or email..."
+              class="search-input"
+              autofocus />
+          </div>
+          
+          @if (isSearching()) {
+            <div class="loading">Searching...</div>
+          }
+          
+          <div class="search-results">
+            @for (user of searchResults(); track user.id) {
+              <div class="user-result">
+                <div class="user-info">
+                  @if (user.avatarUrl) {
+                    <img [src]="user.avatarUrl" [alt]="user.displayName" class="user-avatar" />
+                  } @else {
+                    <div class="avatar-placeholder small">
+                      {{ user.displayName.charAt(0).toUpperCase() }}
+                    </div>
+                  }
+                  <div>
+                    <div class="user-name">{{ user.displayName }}</div>
+                    <div class="user-email">{{ user.email }}</div>
+                  </div>
+                </div>
+                
+                @if (user.isContact) {
+                  <span class="badge">Already a contact</span>
+                } @else {
+                  <button 
+                    (click)="addContact(user)"
+                    class="btn-primary btn-sm">
+                    Add
+                  </button>
+                }
+              </div>
+            }
+            
+            @if (searchResults().length === 0 && !isSearching()) {
+              <div class="empty-state-small">
+                <p>No users found</p>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

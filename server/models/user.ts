@@ -19,6 +19,8 @@ export interface User {
   createdAt: string;
   /** ISO 8601 timestamp of last login */
   lastLoginAt?: string;
+  /** ISO 8601 timestamp of last activity (for presence tracking) */
+  lastSeenAt?: string;
   /** Avatar URL (optional) */
   avatarUrl?: string;
 }

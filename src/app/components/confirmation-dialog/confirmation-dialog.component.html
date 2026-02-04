@@ -1,0 +1,36 @@
+<div class="dialog-overlay" (click)="onCancel()" role="dialog" aria-modal="true" [attr.aria-labelledby]="'dialog-title'">
+  <div class="dialog-content" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h2 id="dialog-title">{{ title() }}</h2>
+      <button 
+        type="button" 
+        class="close-button" 
+        (click)="onCancel()"
+        aria-label="Close dialog">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="dialog-body">
+      <p>{{ message() }}</p>
+    </div>
+    
+    <div class="dialog-footer">
+      <button 
+        type="button" 
+        class="btn btn-secondary" 
+        (click)="onCancel()">
+        {{ cancelText() }}
+      </button>
+      <button 
+        type="button" 
+        [class]="'btn btn-' + confirmButtonClass()" 
+        (click)="onConfirm()">
+        {{ confirmText() }}
+      </button>
+    </div>
+  </div>
+</div>

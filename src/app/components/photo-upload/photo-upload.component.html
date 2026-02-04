@@ -1,0 +1,109 @@
+<div class="photo-upload-container">
+  <!-- Current Photo Display -->
+  @if (currentPhotoUrl && !previewUrl()) {
+    <div class="current-photo">
+      <img [src]="currentPhotoUrl" [alt]="uploadType === 'avatar' ? 'Current avatar' : 'Current group photo'" />
+      <button 
+        type="button"
+        (click)="deletePhoto()"
+        class="btn-delete-overlay"
+        [disabled]="isUploading()"
+        aria-label="Delete photo">
+        🗑️ Delete
+      </button>
+    </div>
+  }
+  
+  <!-- Preview -->
+  @if (previewUrl()) {
+    <div class="preview-container">
+      <img [src]="previewUrl()!" alt="Preview" class="preview-image" />
+      <button 
+        type="button"
+        (click)="reset()"
+        class="btn-remove-preview"
+        aria-label="Remove preview">
+        ✕
+      </button>
+    </div>
+  }
+  
+  <!-- Upload Area -->
+  @if (!previewUrl() && !currentPhotoUrl) {
+    <div 
+      class="upload-area"
+      [class.dragging]="isDragging()"
+      (drop)="onDrop($event)"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (click)="triggerFileInput()">
+      
+      <div class="upload-icon">📷</div>
+      <p class="upload-text">
+        <strong>Click to upload</strong> or drag and drop
+      </p>
+      <p class="upload-hint">
+        JPEG, PNG, GIF, or WebP (max 5MB)
+      </p>
+    </div>
+  }
+  
+  <!-- Hidden File Input -->
+  <input 
+    id="file-input"
+    type="file"
+    accept="image/jpeg,image/png,image/gif,image/webp"
+    (change)="onFileSelected($event)"
+    class="file-input-hidden"
+    aria-label="Choose photo file" />
+  
+  <!-- Action Buttons -->
+  @if (previewUrl() || currentPhotoUrl) {
+    <div class="action-buttons">
+      @if (previewUrl()) {
+        <button 
+          type="button"
+          (click)="uploadPhoto()"
+          class="btn-primary"
+          [disabled]="isUploading()">
+          @if (isUploading()) {
+            Uploading...
+          } @else {
+            Upload Photo
+          }
+        </button>
+        <button 
+          type="button"
+          (click)="reset()"
+          class="btn-secondary"
+          [disabled]="isUploading()">
+          Cancel
+        </button>
+      } @else if (currentPhotoUrl) {
+        <button 
+          type="button"
+          (click)="triggerFileInput()"
+          class="btn-secondary"
+          [disabled]="isUploading()">
+          Change Photo
+        </button>
+        @if (uploadType === 'avatar') {
+          <button 
+            type="button"
+            (click)="deletePhoto()"
+            class="btn-danger"
+            [disabled]="isUploading()">
+            Delete Photo
+          </button>
+        }
+      }
+    </div>
+  }
+  
+  <!-- Error Message -->
+  @if (errorMessage()) {
+    <div class="error-message">
+      {{ errorMessage() }}
+    </div>
+  }
+</div>
