@@ -19,7 +19,7 @@ npm run build:all
 az webapp deploy --name HappyTalk --src-path . --type zip
 ```
 
-**Super Admin:** Login as `naprikovsky@gmail.com` to access admin controls (edit/delete messages).
+**Super Admin:** Set the PRIMARY_ADMIN_EMAIL environment variable on both backend and ADMIN_EMAIL during frontend build. Default is admin@example.com for development.
 
 ---
 
@@ -71,7 +71,7 @@ notepad .env
 | `AZURE_STORAGE_CONNECTION_STRING` | Azure Storage connection string | From Azure Portal → Storage Account → Keys |
 | `BLOB_CONTAINER_NAME` | Blob container for photos | `$web` |
 | `BLOB_PUBLIC_URL` | Public URL for blob storage | `https://yourstorage.z1.web.core.windows.net/` |
-| `PRIMARY_ADMIN_EMAIL` | Super admin email address | `naprikovsky@gmail.com` |
+| `PRIMARY_ADMIN_EMAIL` | Super admin email address | `admin@example.com` or your admin email |
 | `JWT_SECRET` | Secret key for JWT tokens | Any strong random string (min 32 chars) |
 
 **Step 2: Build and run**

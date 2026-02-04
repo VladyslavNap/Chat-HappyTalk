@@ -7,8 +7,6 @@ import {
   Contact,
   AddContactRequest,
   UpdateContactRequest,
-  ContactListResponse,
-  UserSearchResult,
 } from '../models/contact.js';
 
 /**

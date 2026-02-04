@@ -5,7 +5,6 @@ import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
   Contact,
-  ContactWithStatus,
   AddContactRequest,
   UpdateContactRequest,
   UserSearchResult,

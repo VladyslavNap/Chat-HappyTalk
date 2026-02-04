@@ -231,7 +231,6 @@ export class AuthService {
       return false;
     }
     // Super admin email - should match PRIMARY_ADMIN_EMAIL in backend
-    const SUPER_ADMIN_EMAIL = 'naprikovsky@gmail.com';
-    return user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+    return user.email.toLowerCase() === environment.adminEmail.toLowerCase();
   }
 }

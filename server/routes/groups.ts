@@ -8,8 +8,6 @@ import {
   CreateGroupRequest,
   UpdateGroupRequest,
   AddGroupMembersRequest,
-  RemoveGroupMemberRequest,
-  GroupDetails,
   createGroupRoomId,
 } from '../models/group.js';
 import { Room } from '../models/room.js';
@@ -366,7 +364,7 @@ export async function registerGroupsRoutes(
         }
 
         // Mark as inactive instead of deleting
-        const updatedGroup = await cosmosService.updateGroup(groupId, { isActive: false });
+        await cosmosService.updateGroup(groupId, { isActive: false });
         await cosmosService.updateRoom(group.roomId, { isActive: false });
 
         // Broadcast group deleted event
