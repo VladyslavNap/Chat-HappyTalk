@@ -187,6 +187,35 @@
     flex-direction: column;
     min-height: 0;
     border-bottom: 1px solid #e0e0e0;
+
+    // Enable scrolling on small phones
+    @media (max-width: 480px) {
+      overflow-y: auto;
+      overflow-x: hidden;
+      max-height: 30%;
+
+      // Custom scrollbar styling for mobile
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(102, 126, 234, 0.4) transparent;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background-color: rgba(102, 126, 234, 0.4);
+        border-radius: 3px;
+
+        &:hover {
+          background-color: rgba(102, 126, 234, 0.6);
+        }
+      }
+    }
   }
 
   .user-list-section {
@@ -195,6 +224,34 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
+
+    // Enable scrolling on small phones
+    @media (max-width: 480px) {
+      overflow-y: auto;
+      overflow-x: hidden;
+
+      // Custom scrollbar styling for mobile
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(102, 126, 234, 0.4) transparent;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background-color: rgba(102, 126, 234, 0.4);
+        border-radius: 3px;
+
+        &:hover {
+          background-color: rgba(102, 126, 234, 0.6);
+        }
+      }
+    }
   }
 
   .sidebar-footer {
