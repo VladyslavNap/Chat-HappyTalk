@@ -58,6 +58,7 @@ export class Chat implements OnInit, OnDestroy {
   // Confirmation dialog state
   showDeleteConfirmation = signal<boolean>(false);
   messageToDelete = signal<DisplayMessage | null>(null);
+  chatMessageToDelete = signal<ChatMessage | null>(null); // Store the original ChatMessage to avoid repeated searches
   
   // Computed message for confirmation dialog
   deleteConfirmationMessage = computed(() => {
@@ -406,14 +407,15 @@ export class Chat implements OnInit, OnDestroy {
       return;
     }
 
-    // Get the original ChatMessage to access roomid
+    // Get the original ChatMessage to access roomid and store it to avoid repeated searches
     const chatMessage = this.signalrService.messages().find(m => m.id === message.id);
     if (!chatMessage) {
       return;
     }
 
-    // Show confirmation dialog
+    // Show confirmation dialog and store both messages
     this.messageToDelete.set(message);
+    this.chatMessageToDelete.set(chatMessage);
     this.showDeleteConfirmation.set(true);
   }
 
@@ -422,13 +424,9 @@ export class Chat implements OnInit, OnDestroy {
    */
   async confirmDeleteMessage(): Promise<void> {
     const message = this.messageToDelete();
-    if (!message) {
-      return;
-    }
-
-    // Get the original ChatMessage to access roomid
-    const chatMessage = this.signalrService.messages().find(m => m.id === message.id);
-    if (!chatMessage) {
+    const chatMessage = this.chatMessageToDelete();
+    
+    if (!message || !chatMessage) {
       return;
     }
 
@@ -449,6 +447,7 @@ export class Chat implements OnInit, OnDestroy {
     } finally {
       this.isDeletingMessage.set(false);
       this.messageToDelete.set(null);
+      this.chatMessageToDelete.set(null);
     }
   }
 
@@ -458,6 +457,7 @@ export class Chat implements OnInit, OnDestroy {
   cancelDeleteMessage(): void {
     this.showDeleteConfirmation.set(false);
     this.messageToDelete.set(null);
+    this.chatMessageToDelete.set(null);
   }
 
   /**

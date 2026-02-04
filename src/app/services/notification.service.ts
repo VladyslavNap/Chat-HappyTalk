@@ -48,7 +48,7 @@ export class NotificationService {
    * Show a notification.
    */
   private show(message: string, type: Notification['type']): void {
-    const id = Math.random().toString(36).substring(7);
+    const id = crypto.randomUUID();
     const notification: Notification = { id, message, type };
     
     this.notifications.update(notifications => [...notifications, notification]);
