@@ -77,6 +77,9 @@ async function startServer(): Promise<void> {
   await fastify.register(fastifyStatic, {
     root: staticPath,
     prefix: '/',
+    // NOTE: decorateReply must remain true so that reply.sendFile() is available
+    // and used in the SPA notFoundHandler below. We have verified this does not
+    // conflict with other plugins decorating reply in this application.
     decorateReply: true,
   });
 
