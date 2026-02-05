@@ -568,11 +568,22 @@ export class Chat implements OnInit, OnDestroy {
   }
 
   /**
-   * Load offline users (placeholder implementation)
+   * Load offline users.
+   *
+   * NOTE: Temporary stub implementation.
+   * ------------------------------------
+   * Offline users functionality is intentionally disabled in this release
+   * until the backend API is available. The offline users list will remain
+   * empty as a result.
+   *
+   * When backend support is ready, replace this method with an actual API
+   * call that retrieves offline users and populates `offlineUsersData`.
    */
   private async loadOfflineUsers(): Promise<void> {
-    // TODO: Replace with actual API call to get offline users
-    // For now, using empty array as placeholder
+    console.warn(
+      '[Chat] loadOfflineUsers is using a temporary stub implementation. ' +
+      'Offline users list will remain empty until the backend API is implemented.'
+    );
     this.offlineUsersData.set([]);
   }
 
