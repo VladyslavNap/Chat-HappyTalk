@@ -494,7 +494,6 @@
 }
 
 @media (max-width:768px) {
-
   .sidebar.sidebar-visible~.chat-container,
   .chat-layout:has(.sidebar.sidebar-visible) .chat-container {
     opacity: 0;
