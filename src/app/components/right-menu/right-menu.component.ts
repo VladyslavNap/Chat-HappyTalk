@@ -1,6 +1,6 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
   selector: 'app-right-menu',
@@ -11,11 +11,6 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 })
 export class RightMenuComponent {
   isMenuOpen = signal(false);
-  currentPath = signal('');
-
-  constructor(private router: Router) {
-    this.currentPath.set(this.router.url);
-  }
 
   toggleMenu() {
     this.isMenuOpen.set(!this.isMenuOpen());
@@ -23,14 +18,5 @@ export class RightMenuComponent {
 
   closeMenu() {
     this.isMenuOpen.set(false);
-  }
-
-  navigateTo(path: string) {
-    this.router.navigate([path]);
-    this.closeMenu();
-  }
-
-  isCurrentPath(path: string): boolean {
-    return this.currentPath() === path;
   }
 }
