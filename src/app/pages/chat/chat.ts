@@ -598,9 +598,9 @@ export class Chat implements OnInit, OnDestroy {
    * Open settings page
    */
   openSettings(): void {
-    // Navigate to settings or open settings modal
+    // Close the user menu
     this.showUserMenuSignal.set(false);
     // TODO: Implement settings navigation/modal
-    console.log('Settings clicked');
+    window.alert('Settings will be available in a future update.');
   }
 }
