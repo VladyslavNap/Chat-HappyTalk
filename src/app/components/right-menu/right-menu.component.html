@@ -1,0 +1,66 @@
+<div class="right-menu-container">
+  <!-- Menu Toggle Button -->
+  <button class="menu-toggle-btn" (click)="toggleMenu()" [class.active]="isMenuOpen()" aria-label="Toggle menu">
+    <span class="hamburger-icon">
+      <span class="line"></span>
+      <span class="line"></span>
+      <span class="line"></span>
+    </span>
+  </button>
+
+  <!-- Right Side Menu -->
+  <aside class="right-menu" [class.open]="isMenuOpen()">
+    <!-- Menu Header -->
+    <header class="menu-header">
+      <h2 class="menu-title">Menu</h2>
+      <button class="close-btn" (click)="closeMenu()" aria-label="Close menu">
+        ✕
+      </button>
+    </header>
+
+    <!-- Navigation Items -->
+    <nav class="menu-nav">
+      <div class="nav-item">
+        <a 
+          routerLink="/" 
+          routerLinkActive="active" 
+          [routerLinkActiveOptions]="{exact: true}"
+          class="nav-link"
+          (click)="closeMenu()"
+        >
+          <span class="nav-icon">💬</span>
+          <span class="nav-label">Chat</span>
+        </a>
+      </div>
+      
+      <div class="nav-item">
+        <a 
+          routerLink="/contacts" 
+          routerLinkActive="active"
+          class="nav-link"
+          (click)="closeMenu()"
+        >
+          <span class="nav-icon">👥</span>
+          <span class="nav-label">Contacts</span>
+        </a>
+      </div>
+      
+      <div class="nav-item">
+        <a 
+          routerLink="/profile" 
+          routerLinkActive="active"
+          class="nav-link"
+          (click)="closeMenu()"
+        >
+          <span class="nav-icon">👤</span>
+          <span class="nav-label">Profile</span>
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Overlay for mobile -->
+  @if (isMenuOpen()) {
+    <div class="menu-overlay" (click)="closeMenu()"></div>
+  }
+</div>

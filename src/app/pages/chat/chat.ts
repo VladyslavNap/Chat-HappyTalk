@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy, signal, computed, inject, effect, ElementRef, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, RouterLinkActive } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { SignalRService, ChatMessage } from '../../services/signalr.service';
 import { AuthService } from '../../services/auth.service';
@@ -10,6 +9,8 @@ import { UserList } from '../../components/user-list/user-list';
 import { RoomList } from '../../components/room-list/room-list';
 import { CreateGroupComponent } from '../../components/create-group/create-group.component';
 import { ConfirmationDialogComponent } from '../../components/confirmation-dialog/confirmation-dialog.component';
+import { OfflineUserListComponent } from '../../components/offline-user-list/offline-user-list';
+import { RightMenuComponent } from '../../components/right-menu/right-menu.component';
 import { UserProfile } from '../../models/auth.model';
 import { createDMRoomId } from '../../models/dm.model';
 import { Room } from '../../models/room.model';
@@ -28,7 +29,7 @@ type ChatView = 'room' | 'dm';
 
 @Component({
   selector: 'app-chat',
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, UserList, RoomList, CreateGroupComponent, ConfirmationDialogComponent],
+  imports: [CommonModule, FormsModule, UserList, RoomList, CreateGroupComponent, ConfirmationDialogComponent, OfflineUserListComponent, RightMenuComponent],
   templateUrl: './chat.html',
   styleUrl: './chat.scss',
 })
@@ -118,6 +119,9 @@ export class Chat implements OnInit, OnDestroy {
       isActive: true,
     });
     await this.connectToChat();
+    
+    // Load initial online users data
+    await this.refreshOnlineUsers();
   }
 
   ngOnDestroy(): void {
@@ -480,5 +484,112 @@ export class Chat implements OnInit, OnDestroy {
       event.preventDefault();
       this.cancelEditMessage();
     }
+  }
+
+  // New sidebar functionality
+  private showUserMenuSignal = signal<boolean>(false);
+  private refreshingUsers = signal<boolean>(false);
+  onlineUsersData = signal<UserProfile[]>([]);
+  offlineUsersData = signal<UserProfile[]>([]);
+  private expandedSectionsSignal = signal<Set<string>>(new Set(['rooms']));
+
+  /**
+   * Toggle user menu visibility
+   */
+  toggleUserMenu(): void {
+    this.showUserMenuSignal.set(!this.showUserMenuSignal());
+  }
+
+  /**
+   * Check if user menu is shown
+   */
+  showUserMenu(): boolean {
+    return this.showUserMenuSignal();
+  }
+
+  /**
+   * Get online users count
+   */
+  onlineUsersCount(): number {
+    return this.onlineUsersData().length;
+  }
+
+  /**
+   * Get offline users count
+   */
+  offlineUsersCount(): number {
+    return this.offlineUsersData().length;
+  }
+
+  /**
+   * Get total contacts count
+   */
+  totalContactsCount(): number {
+    return this.onlineUsersData().length + this.offlineUsersData().length;
+  }
+
+  /**
+   * Get expanded sections
+   */
+  expandedSections(): Set<string> {
+    return this.expandedSectionsSignal();
+  }
+
+  /**
+   * Toggle accordion section
+   */
+  toggleAccordion(section: string): void {
+    const current = new Set(this.expandedSectionsSignal());
+    if (current.has(section)) {
+      current.delete(section);
+    } else {
+      current.add(section);
+    }
+    this.expandedSectionsSignal.set(current);
+  }
+
+  /**
+   * Refresh online users list
+   */
+  async refreshOnlineUsers(): Promise<void> {
+    this.refreshingUsers.set(true);
+    try {
+      const users = await this.authService.getOnlineUsers().toPromise();
+      if (users) {
+        this.onlineUsersData.set(users);
+        // Load offline users (mock data for now, replace with actual API call)
+        await this.loadOfflineUsers();
+      }
+    } catch (error) {
+      console.error('Failed to refresh online users:', error);
+    } finally {
+      this.refreshingUsers.set(false);
+    }
+  }
+
+  /**
+   * Load offline users (placeholder implementation)
+   */
+  private async loadOfflineUsers(): Promise<void> {
+    // TODO: Replace with actual API call to get offline users
+    // For now, using empty array as placeholder
+    this.offlineUsersData.set([]);
+  }
+
+  /**
+   * Check if currently refreshing users
+   */
+  isRefreshing(): boolean {
+    return this.refreshingUsers();
+  }
+
+  /**
+   * Open settings page
+   */
+  openSettings(): void {
+    // Navigate to settings or open settings modal
+    this.showUserMenuSignal.set(false);
+    // TODO: Implement settings navigation/modal
+    console.log('Settings clicked');
   }
 }

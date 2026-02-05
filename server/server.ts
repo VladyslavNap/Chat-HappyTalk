@@ -35,7 +35,7 @@ async function startServer(): Promise<void> {
 
   // CORS configuration for development
   await fastify.register(fastifyCors, {
-    origin: process.env.CORS_ORIGIN || true,
+    origin: ['http://localhost:4200', 'http://127.0.0.1:4200'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true,
@@ -77,7 +77,7 @@ async function startServer(): Promise<void> {
   await fastify.register(fastifyStatic, {
     root: staticPath,
     prefix: '/',
-    decorateReply: false,
+    decorateReply: true,
   });
 
   // SPA fallback - serve index.html for non-API routes

@@ -31,7 +31,7 @@ export class UploadService {
    * @returns Observable with avatar URL
    */
   uploadAvatar(file: File): Observable<{ avatarUrl: string }> {
-    const url = `${this.apiUrl}/upload/avatar`;
+    const url = `${this.apiUrl}/api/upload/avatar`;
     const formData = new FormData();
     formData.append('file', file);
 
@@ -47,7 +47,7 @@ export class UploadService {
    * @returns Observable with photo URL
    */
   uploadGroupPhoto(groupId: string, file: File): Observable<{ photoUrl: string }> {
-    const url = `${this.apiUrl}/upload/group/${groupId}/photo`;
+    const url = `${this.apiUrl}/api/upload/group/${groupId}/photo`;
     const formData = new FormData();
     formData.append('file', file);
 
@@ -60,7 +60,7 @@ export class UploadService {
    * Delete user avatar.
    */
   deleteAvatar(): Observable<void> {
-    const url = `${this.apiUrl}/upload/avatar`;
+    const url = `${this.apiUrl}/api/upload/avatar`;
     return this.http.delete<void>(url, { headers: this.getAuthHeaders() });
   }
 

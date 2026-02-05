@@ -4,8 +4,8 @@
  */
 export const environment = {
   production: false,
-  apiUrl: '',  // Empty for same-origin, set for external API
-  apiBaseUrl: '',  // Empty for same-origin, set for external API
+  apiUrl: 'http://localhost:3000',  // Backend server URL
+  apiBaseUrl: 'http://localhost:3000',  // Backend server URL
   signalrHubName: 'chat',
   defaultroomid: 'public',
   // Admin email for super admin privileges

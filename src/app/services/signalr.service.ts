@@ -1,5 +1,6 @@
 import { Injectable, OnDestroy, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 
 export interface ChatMessage {
   id: string;
@@ -93,7 +94,7 @@ export class SignalRService implements OnDestroy {
    */
   private async pollMessages(): Promise<void> {
     const room = this.currentroomid();
-    const response = await this.http.get<MessageListResponse>(`/api/messages/${room}?limit=50`).toPromise();
+    const response = await this.http.get<MessageListResponse>(`${environment.apiUrl}/api/messages/${room}?limit=50`).toPromise();
 
     if (response?.messages) {
       const currentMessages = this.messages();
@@ -140,7 +141,7 @@ export class SignalRService implements OnDestroy {
       clientId: crypto.randomUUID(),
     };
 
-    const response = await this.http.post<ChatMessage>('/api/messages', request).toPromise();
+    const response = await this.http.post<ChatMessage>(`${environment.apiUrl}/api/messages`, request).toPromise();
 
     if (!response) {
       throw new Error('Failed to send message');
@@ -158,7 +159,7 @@ export class SignalRService implements OnDestroy {
    */
   async loadHistory(roomid?: string, limit?: number): Promise<ChatMessage[]> {
     const room = roomid || this.currentroomid();
-    const url = limit ? `/api/messages/${room}?limit=${limit}` : `/api/messages/${room}`;
+    const url = limit ? `${environment.apiUrl}/api/messages/${room}?limit=${limit}` : `${environment.apiUrl}/api/messages/${room}`;
 
     const response = await this.http.get<MessageListResponse>(url).toPromise();
 

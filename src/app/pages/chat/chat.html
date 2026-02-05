@@ -4,67 +4,136 @@
     <div class="sidebar-overlay" (click)="toggleSidebar()"></div>
   }
 
-  <!-- Sidebar with room list and user list -->
+  <!-- Sidebar with improved layout -->
   <aside class="sidebar" [class.sidebar-visible]="showSidebar()" [class.sidebar-hidden]="!showSidebar()">
-    <div class="sidebar-header">
-      <h2>HappyTalk</h2>
+    <!-- Header with app branding and close button -->
+    <header class="sidebar-header">
+      <div class="app-branding">
+        <div class="app-logo">💬</div>
+        <h1 class="app-title">HappyTalk</h1>
+      </div>
       <button class="sidebar-close-btn" (click)="toggleSidebar()" aria-label="Close sidebar">
-        ×
+        ✕
       </button>
+    </header>
+
+    <!-- Accordion Sections -->
+    <div class="accordion-sections">
+      <!-- Rooms Accordion Item -->
+      <div class="accordion-item" [class.expanded]="expandedSections().has('rooms')">
+        <div class="accordion-header" (click)="toggleAccordion('rooms')">
+          <h2 class="accordion-title">
+            <span class="accordion-icon">🏠</span>
+            Rooms
+          </h2>
+          <div class="accordion-controls">
+            <button class="section-action-btn" (click)="openCreateGroupDialog(); $event.stopPropagation()" title="Create new group">
+              ➕
+            </button>
+            <span class="accordion-chevron" [class.rotated]="expandedSections().has('rooms')">
+              ▼
+            </span>
+          </div>
+        </div>
+        <div class="accordion-content" [class.expanded]="expandedSections().has('rooms')">
+          <div class="section-content">
+            <app-room-list (roomSelected)="onRoomSelected($event)"></app-room-list>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contacts Accordion Item -->
+      <div class="accordion-item" [class.expanded]="expandedSections().has('contacts')">
+        <div class="accordion-header" (click)="toggleAccordion('contacts')">
+          <h2 class="accordion-title">
+            <span class="accordion-icon">👥</span>
+            Contacts
+            <span class="contact-count">{{ totalContactsCount() }}</span>
+          </h2>
+          <div class="accordion-controls">
+            <button class="section-action-btn refresh-btn" (click)="refreshOnlineUsers(); $event.stopPropagation()" title="Refresh users">
+              <span [class.spinning]="isRefreshing()">↻</span>
+            </button>
+            <span class="accordion-chevron" [class.rotated]="expandedSections().has('contacts')">
+              ▼
+            </span>
+          </div>
+        </div>
+        <div class="accordion-content" [class.expanded]="expandedSections().has('contacts')">
+          <div class="contact-sections">
+            <!-- Online Contacts -->
+            <div class="contact-subsection">
+              <div class="subsection-header">
+                <h3 class="subsection-title">
+                  <span class="status-indicator online"></span>
+                  Online
+                  <span class="online-count">{{ onlineUsersCount() }}</span>
+                </h3>
+              </div>
+              <div class="subsection-content">
+                <app-user-list (userSelected)="onUserSelected($event)"></app-user-list>
+              </div>
+            </div>
+            
+            <!-- Offline Contacts -->
+            <div class="contact-subsection">
+              <div class="subsection-header">
+                <h3 class="subsection-title">
+                  <span class="status-indicator offline"></span>
+                  Offline
+                  <span class="offline-count">{{ offlineUsersCount() }}</span>
+                </h3>
+              </div>
+              <div class="subsection-content">
+                <app-offline-user-list [offlineUsers]="offlineUsersData()" (userSelected)="onUserSelected($event)"></app-offline-user-list>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Navigation Links -->
-    <nav class="sidebar-navigation">
-      <a routerLink="/contacts" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()">
-        <span class="nav-icon">👥</span>
-        <span class="nav-label">Contacts</span>
-      </a>
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link" (click)="closeSidebarOnMobile()">
-        <span class="nav-icon">💬</span>
-        <span class="nav-label">Chat</span>
-      </a>
-      <a routerLink="/profile" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()">
-        <span class="nav-icon">👤</span>
-        <span class="nav-label">Profile</span>
-      </a>
-    </nav>
-
-    <div class="room-list-section">
-      <app-room-list (roomSelected)="onRoomSelected($event)"></app-room-list>
-    </div>
-
-    <div class="user-list-section">
-      <app-user-list (userSelected)="onUserSelected($event)"></app-user-list>
-    </div>
-
-    <div class="sidebar-footer">
-      <a routerLink="/profile" class="current-user-info clickable" (click)="closeSidebarOnMobile()">
-        <div class="user-avatar-small">
+    <!-- User Profile & Actions -->
+    <footer class="sidebar-footer">
+      <div class="user-profile">
+        <div class="user-avatar">
           {{ (currentUser()?.displayName || currentUser()?.username || 'U').substring(0, 2).toUpperCase() }}
         </div>
-        <div class="user-details">
-          <div class="user-name-small">{{ currentUser()?.displayName || 'User' }}</div>
-          <div class="user-username-small">@{{ currentUser()?.username || 'unknown' }}</div>
+        <div class="user-info">
+          <div class="user-name">{{ currentUser()?.displayName || 'User' }}</div>
+          <div class="user-status">🟢 Online</div>
         </div>
-        <span class="profile-arrow">›</span>
-      </a>
-      <button 
-        class="create-group-button" 
-        (click)="openCreateGroupDialog()" 
-        title="Create a new group">
-        ➕ Create Group
-      </button>
-      <button class="logout-button" (click)="onLogout()" title="Logout">
-        Logout
-      </button>
-    </div>
+        <button class="user-menu-btn" (click)="toggleUserMenu()" aria-label="User menu">
+          ⋯
+        </button>
+      </div>
+      
+      <!-- Quick Actions -->
+      <div class="quick-actions" [class.expanded]="showUserMenu()">
+        <button class="action-btn secondary" (click)="openSettings()">
+          <span class="btn-icon">⚙️</span>
+          Settings
+        </button>
+        <button class="action-btn secondary" (click)="openCreateGroupDialog()">
+          <span class="btn-icon">➕</span>
+          Create Group
+        </button>
+        <button class="action-btn danger" (click)="onLogout()">
+          <span class="btn-icon">🚪</span>
+          Logout
+        </button>
+      </div>
+    </footer>
   </aside>
+
+  <!-- Right Side Menu -->
+  <app-right-menu></app-right-menu>
 
   <!-- Create Group Component (Hidden until opened) -->
   <app-create-group #createGroup></app-create-group>
 
   <!-- Main chat area -->
-  <div class="chat-container" role="main">
+  <div class="chat-container" [class.sidebar-hidden]="showSidebar() && isMobile()" role="main">
     <header class="chat-header">
       <button class="menu-button" (click)="toggleSidebar()" aria-label="Toggle sidebar">
         ☰
