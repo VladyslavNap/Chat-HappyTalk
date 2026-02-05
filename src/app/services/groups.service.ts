@@ -42,7 +42,7 @@ export class GroupsService {
    * Get all groups for the current user.
    */
   getGroups(): Observable<Group[]> {
-    const url = `${this.apiUrl}/groups`;
+    const url = `${this.apiUrl}/api/groups`;
     return this.http.get<Group[]>(url, { headers: this.getAuthHeaders() }).pipe(
       tap((groups) => {
         this.groupsSubject.next(groups);
@@ -55,7 +55,7 @@ export class GroupsService {
    * Get group details with member information.
    */
   getGroupDetails(groupId: string): Observable<GroupDetails> {
-    const url = `${this.apiUrl}/groups/${groupId}`;
+    const url = `${this.apiUrl}/api/groups/${groupId}`;
     return this.http.get<GroupDetails>(url, { headers: this.getAuthHeaders() });
   }
 
@@ -63,7 +63,7 @@ export class GroupsService {
    * Create a new private group.
    */
   createGroup(request: CreateGroupRequest): Observable<Group> {
-    const url = `${this.apiUrl}/groups`;
+    const url = `${this.apiUrl}/api/groups`;
     return this.http.post<Group>(url, request, { headers: this.getAuthHeaders() }).pipe(
       tap((newGroup) => {
         const currentGroups = this.groupsSubject.value;
@@ -77,7 +77,7 @@ export class GroupsService {
    * Update group metadata (name, description, avatar).
    */
   updateGroup(groupId: string, request: UpdateGroupRequest): Observable<Group> {
-    const url = `${this.apiUrl}/groups/${groupId}`;
+    const url = `${this.apiUrl}/api/groups/${groupId}`;
     return this.http.patch<Group>(url, request, { headers: this.getAuthHeaders() }).pipe(
       tap((updatedGroup) => {
         const currentGroups = this.groupsSubject.value;
@@ -95,7 +95,7 @@ export class GroupsService {
    * Add members to a group.
    */
   addGroupMembers(groupId: string, memberIds: string[]): Observable<Group> {
-    const url = `${this.apiUrl}/groups/${groupId}/members`;
+    const url = `${this.apiUrl}/api/groups/${groupId}/members`;
     return this.http.post<Group>(url, { memberIds }, { headers: this.getAuthHeaders() }).pipe(
       tap((updatedGroup) => {
         const currentGroups = this.groupsSubject.value;
@@ -113,7 +113,7 @@ export class GroupsService {
    * Remove a member from a group.
    */
   removeGroupMember(groupId: string, memberId: string): Observable<Group> {
-    const url = `${this.apiUrl}/groups/${groupId}/members/${memberId}`;
+    const url = `${this.apiUrl}/api/groups/${groupId}/members/${memberId}`;
     return this.http.delete<Group>(url, { headers: this.getAuthHeaders() }).pipe(
       tap((updatedGroup) => {
         const currentGroups = this.groupsSubject.value;
@@ -131,7 +131,7 @@ export class GroupsService {
    * Delete a group (soft delete).
    */
   deleteGroup(groupId: string): Observable<void> {
-    const url = `${this.apiUrl}/groups/${groupId}`;
+    const url = `${this.apiUrl}/api/groups/${groupId}`;
     return this.http.delete<void>(url, { headers: this.getAuthHeaders() }).pipe(
       tap(() => {
         const currentGroups = this.groupsSubject.value.filter((g) => g.id !== groupId);

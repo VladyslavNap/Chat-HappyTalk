@@ -4,8 +4,10 @@
  */
 export const environment = {
   production: false,
-  apiUrl: '',  // Empty for same-origin, set for external API
-  apiBaseUrl: '',  // Empty for same-origin, set for external API
+  // Base URL for API calls. Intentionally empty to use same-origin and Angular dev proxy (/api/*).
+  apiUrl: '',
+  // Base URL for building API endpoints; leave empty to avoid hardcoded hosts and rely on proxy configuration.
+  apiBaseUrl: '',
   signalrHubName: 'chat',
   defaultroomid: 'public',
   // Admin email for super admin privileges

@@ -33,9 +33,21 @@ async function startServer(): Promise<void> {
     },
   });
 
-  // CORS configuration for development
+  // CORS configuration
+  // In production: Set CORS_ORIGIN env var to 'true' for all origins or comma-separated URLs
+  // In development: Defaults to localhost URLs
+  const getCorsOrigin = () => {
+    if (!process.env.CORS_ORIGIN) {
+      return ['http://localhost:4200', 'http://127.0.0.1:4200'];
+    }
+    if (process.env.CORS_ORIGIN === 'true') {
+      return true;
+    }
+    return process.env.CORS_ORIGIN.split(',').map(url => url.trim());
+  };
+
   await fastify.register(fastifyCors, {
-    origin: process.env.CORS_ORIGIN || true,
+    origin: getCorsOrigin(),
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true,
@@ -77,7 +89,10 @@ async function startServer(): Promise<void> {
   await fastify.register(fastifyStatic, {
     root: staticPath,
     prefix: '/',
-    decorateReply: false,
+    // NOTE: decorateReply must remain true so that reply.sendFile() is available
+    // and used in the SPA notFoundHandler below. We have verified this does not
+    // conflict with other plugins decorating reply in this application.
+    decorateReply: true,
   });
 
   // SPA fallback - serve index.html for non-API routes

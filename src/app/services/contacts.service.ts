@@ -32,7 +32,7 @@ export class ContactsService {
    * Get authorization headers with JWT token.
    */
   private getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('happytalk_auth_token');
     return new HttpHeaders({
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
@@ -43,7 +43,7 @@ export class ContactsService {
    * Get all contacts for the current user.
    */
   getContacts(includeOffline: boolean = true): Observable<Contact[]> {
-    const url = `${this.apiUrl}/contacts?includeOffline=${includeOffline}`;
+    const url = `${this.apiUrl}/api/contacts?includeOffline=${includeOffline}`;
     return this.http.get<Contact[]>(url, { headers: this.getAuthHeaders() }).pipe(
       tap((contacts) => {
         this.contactsSubject.next(contacts);
@@ -57,7 +57,7 @@ export class ContactsService {
    * Search for users to add as contacts.
    */
   searchUsers(query: string, limit: number = 20): Observable<UserSearchResult[]> {
-    const url = `${this.apiUrl}/contacts/search?query=${encodeURIComponent(query)}&limit=${limit}`;
+    const url = `${this.apiUrl}/api/contacts/search?query=${encodeURIComponent(query)}&limit=${limit}`;
     return this.http.get<UserSearchResult[]>(url, { headers: this.getAuthHeaders() });
   }
 
@@ -65,7 +65,7 @@ export class ContactsService {
    * Add a new contact.
    */
   addContact(request: AddContactRequest): Observable<Contact> {
-    const url = `${this.apiUrl}/contacts`;
+    const url = `${this.apiUrl}/api/contacts`;
     return this.http.post<Contact>(url, request, { headers: this.getAuthHeaders() }).pipe(
       tap((newContact) => {
         const currentContacts = this.contactsSubject.value;
@@ -80,7 +80,7 @@ export class ContactsService {
    * Update a contact (nickname, favorite status).
    */
   updateContact(contactId: string, request: UpdateContactRequest): Observable<Contact> {
-    const url = `${this.apiUrl}/contacts/${contactId}`;
+    const url = `${this.apiUrl}/api/contacts/${contactId}`;
     return this.http.patch<Contact>(url, request, { headers: this.getAuthHeaders() }).pipe(
       tap((updatedContact) => {
         const currentContacts = this.contactsSubject.value;
@@ -99,7 +99,7 @@ export class ContactsService {
    * Remove a contact.
    */
   removeContact(contactId: string): Observable<void> {
-    const url = `${this.apiUrl}/contacts/${contactId}`;
+    const url = `${this.apiUrl}/api/contacts/${contactId}`;
     return this.http.delete<void>(url, { headers: this.getAuthHeaders() }).pipe(
       tap(() => {
         const currentContacts = this.contactsSubject.value.filter((c) => c.id !== contactId);
@@ -114,7 +114,7 @@ export class ContactsService {
    * Get online status for specific contacts.
    */
   getContactsStatus(contactIds: string[]): Observable<any> {
-    const url = `${this.apiUrl}/contacts/status`;
+    const url = `${this.apiUrl}/api/contacts/status`;
     return this.http.post<any>(url, { contactIds }, { headers: this.getAuthHeaders() });
   }
 
